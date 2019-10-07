@@ -38,7 +38,7 @@ def main(db_engine, files):
         temp_file.close()
         os.unlink(temp_file.name)
         print(dataset.iloc[0]["text"])
-        #dataset.to_sql(Document.__tablename__, engine.raw_connection(), if_exists='append', index=False)
+        dataset.to_sql(Document.__tablename__, engine.raw_connection(), if_exists='append', index=False)
 
 
 if __name__ == "__main__":
