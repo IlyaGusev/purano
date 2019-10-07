@@ -10,7 +10,9 @@ from catboost import CatBoostClassifier
 from models import Document, Info
 
 
-def train_clf(docs, annotations):
+def train_clf(annotations):
+    annotations = list(annotations)
+    docs = [annot.document for annot in annotations]
     all_topics = list({doc.topics for doc in docs})
 
     def to_features(annotation):
@@ -21,14 +23,16 @@ def train_clf(docs, annotations):
 
     X = np.array([to_features(annot) for annot in annotations])
     y = [to_target(doc) for doc in docs]
-    border = X.shape[0] * 9 // 10
-    X_train, X_test = X[:border], X[border:]
-    y_train, y_test = y[:border], y[border:]
+    val_border = X.shape[0] * 8 // 10
+    test_border = X.shape[0] * 9 // 10
+    X_train, X_val, X_test = X[:val_border], X[val_border:test_border], X[test_border:]
+    y_train, y_val, y_test = y[:val_border], y[val_border:test_border], y[test_border:]
     #clf = MLPClassifier()
     clf = CatBoostClassifier(iterations=500,
+                             depth=5,
                              loss_function='MultiClass',
                              verbose=True)
-    clf.fit(X_train, y_train)
+    clf.fit(X_train, y_train, eval_set=[(X_val, y_val)])
     y_predicted = clf.predict(X_test)
     print(metrics.classification_report(y_test, y_predicted))
 
@@ -38,9 +42,8 @@ def main(db_engine, nrows):
     Session = sessionmaker(bind=engine)
     session = Session()
     query = session.query(Info)
-    annotations = list(query.limit(nrows)) if nrows else list(query.all())
-    docs = [annot.document for annot in annotations]
-    train_clf(docs, annotations)
+    annotations = query.limit(nrows) if nrows else query.all()
+    train_clf(annotations)
 
 
 if __name__ == "__main__":
