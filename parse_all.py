@@ -1,10 +1,12 @@
 import argparse
 import os
+from urllib.parse import urlsplit
 from tempfile import NamedTemporaryFile
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from models import Base, Document
+from models import Base, Document, Agency
 
 
 def fix_line_feed(input_file_name, output_file_name):
@@ -20,10 +22,14 @@ def process_parser_data(file_name):
         encoding='utf-8', error_bad_lines=False, header=0,
         verbose=False, keep_date_col=True, index_col=False)
     dataset = dataset[["date", "url", "edition", "title", "text", "authors", "topics"]]
+    dataset = dataset[(~dataset["text"].isnull() & ~dataset["title"].isnull())]
     dataset["date"] = pd.to_datetime(dataset["date"])
-    dataset["text"] = dataset["text"].apply(lambda x: x.replace("\\n", "\n"))
+    dataset["text"] = dataset["text"].apply(lambda x: x.replace("\\n", " "))
     dataset["edition"] = dataset["edition"].apply(lambda x: None if x == "-" else x)
+    # TODO: sort by date
+    # TODO: undup
     print(dataset.info())
+    print(dataset.head(5))
     return dataset
 
 
@@ -37,6 +43,18 @@ def main(db_engine, files):
         dataset = process_parser_data(temp_file.name)
         temp_file.close()
         os.unlink(temp_file.name)
+
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        host = dataset["url"].apply(lambda x: urlsplit(x).netloc).value_counts().index[0]
+        agency = session.query(Agency).filter_by(host=host).first()
+        if agency is None:
+            agency = Agency()
+            agency.host = host
+            session.add(agency)
+            session.commit()
+        print("Agency id: {}".format(agency.id))
+        dataset["agency_id"] = agency.id
         print(dataset.iloc[0]["text"])
         dataset.to_sql(Document.__tablename__, engine.raw_connection(), if_exists='append', index=False)
 

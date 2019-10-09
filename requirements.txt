@@ -2,7 +2,9 @@ numpy
 pandas
 sqlalchemy
 sklearn
+tensorflow<2.0.0
 bert-serving-client
 bert-serving-server
 protobuf
 catboost
+seaborn

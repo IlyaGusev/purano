@@ -14,42 +14,39 @@ class Annotator:
         self.db_session = db_session
         self.bert_client = bert_client
 
-    def batch_annotate(self, docs, batch_size, reannotate):
-        docs = list(docs)
-        batch_number = 0
-        while batch_number * batch_size < len(docs):
-            start = batch_number * batch_size
-            end = min((batch_number + 1) * batch_size, len(docs))
-            if start == end:
-                break
+    def process_by_batch(self, docs, batch_size, reannotate):
+        docs_batch = []
+        for doc in docs:
+            docs_batch.append(doc)
+            if len(docs_batch) != batch_size:
+                continue
+            self.annotate_batch(docs_batch, reannotate)
+            docs_batch = []
+        if docs_batch:
+            self.annotate_batch(docs_batch, reannotate)
 
-            docs_batch = docs[start:end]
-            affected_doc_ids = tuple((doc.id for doc in docs_batch))
-            info_query = self.db_session.query(Info).filter(Info.document_id.in_(affected_doc_ids))
-            skip_ids = {info.document_id for info in info_query.all()}
-            if reannotate:
-                info_query.delete(synchronize_session=False)
-                self.db_session.commit()
-                if len(skip_ids) != 0:
-                    print("Annotation wiil be replaced for {} documents".format(len(skip_ids)))
-            elif skip_ids:
-                docs_batch = [doc for doc in docs_batch if doc.id not in skip_ids]
-                print("Skipped {} documents".format(len(skip_ids)))
-                if not docs_batch:
-                    batch_number += 1
-                    continue
-
-            batch = [InfoPb() for _ in range(len(docs_batch))]
-            self.process_bert(docs_batch, batch)
-            print("Annotated {} documents".format(len(batch)))
-
-            batch = [Info(doc.id, info) for doc, info in zip(docs_batch, batch)]
-            assert len(batch) <= batch_size
-            self.db_session.bulk_save_objects(batch)
+    def annotate_batch(self, docs_batch, reannotate):
+        affected_doc_ids = tuple((doc.id for doc in docs_batch))
+        info_query = self.db_session.query(Info).filter(Info.document_id.in_(affected_doc_ids))
+        skip_ids = {info.document_id for info in info_query.all()}
+        if reannotate:
+            info_query.delete(synchronize_session=False)
             self.db_session.commit()
-            print("Saved {} documents".format(len(batch)))
+            if len(skip_ids) != 0:
+                print("Annotation wiil be replaced for {} documents".format(len(skip_ids)))
+        elif skip_ids:
+            docs_batch = [doc for doc in docs_batch if doc.id not in skip_ids]
+            print("Skipped {} documents".format(len(skip_ids)))
+            if not docs_batch:
+                return
 
-            batch_number += 1
+        batch = [InfoPb() for _ in range(len(docs_batch))]
+        self.process_bert(docs_batch, batch)
+
+        batch = [Info(doc.id, info) for doc, info in zip(docs_batch, batch)]
+        self.db_session.bulk_save_objects(batch)
+        self.db_session.commit()
+        print("Annotated and saved {} documents, first dated {}".format(len(batch), docs_batch[0].date))
 
     def process_bert(self, docs, records):
         titles = [doc.title for doc in docs]
@@ -68,6 +65,10 @@ def main(bert_client_ip,
          batch_size,
          db_engine,
          reannotate,
+         sort_by_date,
+         start_date,
+         end_date,
+         agency_id,
          nrows):
     bert_client = BertClient(ip=bert_client_ip, port=bert_client_port, port_out=bert_client_port_out)
     engine = create_engine(db_engine)
@@ -75,8 +76,16 @@ def main(bert_client_ip,
     session = Session()
     annotator = Annotator(session, bert_client)
     query = session.query(Document)
+    if agency_id:
+        query = query.filter(Document.agency_id == agency_id)
+    if start_date:
+        query = query.filter(Document.date > start_date)
+    if end_date:
+        qeury = query.filter(Document.date < end_date)
+    if sort_by_date:
+        query = query.order_by(Document.date)
     docs = query.limit(nrows) if nrows else query.all()
-    annotator.batch_annotate(docs, reannotate=reannotate, batch_size=batch_size)
+    annotator.process_by_batch(docs, reannotate=reannotate, batch_size=batch_size)
 
 
 if __name__ == "__main__":
@@ -87,6 +96,10 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--db-engine", type=str, default="sqlite:///news.db")
     parser.add_argument("--reannotate", default=False, action='store_true')
+    parser.add_argument("--sort-by-date", default=False,  action='store_true')
+    parser.add_argument("--start-date", type=str, default=None)
+    parser.add_argument("--end-date", type=str, default=None)
+    parser.add_argument("--agency-id", type=int, default=None)
     parser.add_argument("--nrows", type=int, default=None)
 
     args = parser.parse_args()

@@ -6,6 +6,14 @@ from info_pb2 import Info as InfoPb
 Base = declarative_base()
 
 
+class Agency(Base):
+    __tablename__ = "agency"
+
+    id = Column(Integer, primary_key=True)
+    host = Column(String, unique=True, nullable=False)
+    name = Column(String, nullable=True)
+
+
 class Document(Base):
     __tablename__ = "document"
 
@@ -18,6 +26,8 @@ class Document(Base):
     topics = Column(Text, nullable=True)
     authors = Column(Text, nullable=True)
     info = relationship("Info", uselist=False, back_populates="document")
+    agency_id = Column(Integer, ForeignKey("agency.id"))
+    agency = relationship("Agency", backref="documents")
 
 
 class Info(Base):
