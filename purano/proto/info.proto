@@ -5,4 +5,5 @@ package info;
 message Info {
     repeated double title_bert_embedding = 1;
     repeated double text_bert_embedding = 2;
+    repeated double title_rvs_fasttext_embedding = 3;
 }

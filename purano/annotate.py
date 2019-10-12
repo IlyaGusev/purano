@@ -4,15 +4,29 @@ import numpy as np
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bert_serving.client import BertClient
+from gensim.models import KeyedVectors
+from gensim.models.keyedvectors import FastTextKeyedVectors
+from razdel import tokenize
 
 from purano.models import Document, Info
 from purano.proto.info_pb2 import Info as InfoPb
 
 
 class Annotator:
-    def __init__(self, db_session, bert_client=None):
+    def __init__(self, db_session, config_path):
+        with open(config_path) as r:
+            self.config = json.load(r)
+        self.processors = dict()
+        for key, item in self.config["processors"].items():
+            item_type = item.pop("type")
+            if item_type == "bert_client":
+                self.processors[key] = BertClient(**item)
+            elif item_type == "fasttext":
+                self.processors[key] = KeyedVectors.load(item["path"])
+            else:
+                assert False, "Unsupported processor in config"
+            print("'{}' processor loaded".format(key))
         self.db_session = db_session
-        self.bert_client = bert_client
 
     def process_by_batch(self, docs, batch_size, reannotate):
         docs_batch = []
@@ -29,39 +43,48 @@ class Annotator:
         affected_doc_ids = tuple((doc.id for doc in docs_batch))
         info_query = self.db_session.query(Info).filter(Info.document_id.in_(affected_doc_ids))
         skip_ids = {info.document_id for info in info_query.all()}
-        if reannotate:
-            info_query.delete(synchronize_session=False)
-            self.db_session.commit()
-            if len(skip_ids) != 0:
-                print("Annotation wiil be replaced for {} documents".format(len(skip_ids)))
-        elif skip_ids:
-            docs_batch = [doc for doc in docs_batch if doc.id not in skip_ids]
-            print("Skipped {} documents".format(len(skip_ids)))
-            if not docs_batch:
-                return
+        if skip_ids:
+            if reannotate:
+                info_query.delete(synchronize_session=False)
+                self.db_session.commit()
+                print("Annotation wiil be changed for {} documents".format(len(skip_ids)))
+            else:
+                docs_batch = [doc for doc in docs_batch if doc.id not in skip_ids]
+                print("Skipped {} documents".format(len(skip_ids)))
+                if not docs_batch:
+                    return
 
         batch = [InfoPb() for _ in range(len(docs_batch))]
-        self.process_bert(docs_batch, batch)
+        for step_name in self.config.get("steps"):
+            step = self.config[step_name]
+            processor = self.processors.get(step.get("processor"))
+            input_field = step.get("input_field")
+            output_field = step.get("output_field")
+            self.process(processor, docs_batch, batch, input_field, output_field)
 
         batch = [Info(doc.id, info) for doc, info in zip(docs_batch, batch)]
         self.db_session.bulk_save_objects(batch)
         self.db_session.commit()
         print("Annotated and saved {} documents, first dated {}".format(len(batch), docs_batch[0].date))
 
-    def process_bert(self, docs, records):
-        titles = [doc.title for doc in docs]
-        texts = [doc.text for doc in docs]
-        bert_embeddings = self.bert_client.encode(titles + texts)
-        titles_embeddings = bert_embeddings[:len(titles)]
-        texts_embeddings = bert_embeddings[len(titles):]
-        for index, info in enumerate(records):
-            info.title_bert_embedding[:] = titles_embeddings[index]
-            info.text_bert_embedding[:] = texts_embeddings[index]
+    @staticmethod
+    def process(processor, docs, records_to_modify, input_field, output_field):
+        inputs = [getattr(doc, input_field) for doc in docs]
+        if isinstance(processor, BertClient):
+            outputs = processor.encode(inputs)
+        elif isinstance(processor, FastTextKeyedVectors):
+            inputs = [tokenize(inp) for inp in inputs]
+            outputs = []
+            for sample in inputs:
+                embedding = np.mean(np.array([processor.wv.word_vec(token) for token in sample]), axis=0)
+                outputs.append(embedding)
+        else:
+            assert False
+        for index, info in enumerate(records_to_modify):
+            getattr(info, output_field)[:] = outputs[index]
 
 
-def main(bert_client_ip,
-         bert_client_port,
-         bert_client_port_out,
+def main(config,
          batch_size,
          db_engine,
          reannotate,
@@ -70,11 +93,10 @@ def main(bert_client_ip,
          end_date,
          agency_id,
          nrows):
-    bert_client = BertClient(ip=bert_client_ip, port=bert_client_port, port_out=bert_client_port_out)
     engine = create_engine(db_engine)
     Session = sessionmaker(bind=engine)
     session = Session()
-    annotator = Annotator(session, bert_client)
+    annotator = Annotator(session, config)
     query = session.query(Document)
     if agency_id:
         query = query.filter(Document.agency_id == agency_id)
@@ -90,9 +112,7 @@ def main(bert_client_ip,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--bert-client-ip", type=str, default="localhost")
-    parser.add_argument("--bert-client-port", type=int, default=5555)
-    parser.add_argument("--bert-client-port-out", type=int, default=5556)
+    parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--db-engine", type=str, default="sqlite:///news.db")
     parser.add_argument("--reannotate", default=False, action='store_true')

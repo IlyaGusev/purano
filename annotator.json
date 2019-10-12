@@ -1,0 +1,34 @@
+{
+    "steps": [
+        "bert_title",
+        "bert_text",
+        "rvs_fasttext_title"
+    ],
+    "processors": {
+        "bert_client": {
+            "type": "bert_client",
+            "ip": "localhost",
+            "port": 5555,
+            "port_out": 5556
+        },
+        "rvs_fasttext": {
+            "type": "fasttext",
+            "path": "/Users/ilya-gusev/Models/rvs_tayga_fasttext/model.model"
+        }
+    },
+    "bert_title": {
+        "processor": "bert_client",
+        "input_field": "title",
+        "output_field": "title_bert_embedding"
+    },
+    "bert_text": {
+        "processor": "bert_client",
+        "input_field": "text",
+        "output_field": "text_bert_embedding"
+    },
+    "rvs_fasttext_title": {
+        "processor": "rvs_fasttext",
+        "input_field": "title",
+        "output_field": "title_rvs_fasttext_embedding"
+    }
+}
