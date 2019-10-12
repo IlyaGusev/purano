@@ -5,8 +5,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bert_serving.client import BertClient
 
-from models import Document, Info
-from info_pb2 import Info as InfoPb
+from purano.models import Document, Info
+from purano.proto.info_pb2 import Info as InfoPb
 
 
 class Annotator:

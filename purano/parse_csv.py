@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models import Base, Document, Agency
+from purano.models import Base, Document, Agency
 
 
 def fix_line_feed(input_file_name, output_file_name):

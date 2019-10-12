@@ -8,3 +8,4 @@ bert-serving-server
 protobuf
 catboost
 seaborn
+gensim

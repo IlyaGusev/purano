@@ -7,7 +7,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn import metrics
 from catboost import CatBoostClassifier
 
-from models import Document, Info
+from purano.models import Document, Info
 
 
 def train_clf(annotations):

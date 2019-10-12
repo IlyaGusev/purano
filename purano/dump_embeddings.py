@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from torch.utils.tensorboard import SummaryWriter
 
-from models import Document, Info
+from purano.models import Document, Info
 
 
 def dump_embeddings(annotations):

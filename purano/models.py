@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Text, Date, ForeignKey, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from info_pb2 import Info as InfoPb
+from purano.proto.info_pb2 import Info as InfoPb
 
 Base = declarative_base()
 
