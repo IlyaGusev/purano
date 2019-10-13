@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from bert_serving.client import BertClient
 from gensim.models import KeyedVectors
 from gensim.models.keyedvectors import FastTextKeyedVectors
+from allennlp.commands.elmo import ElmoEmbedder
 from razdel import tokenize
 
 from purano.models import Document, Info
@@ -23,6 +24,8 @@ class Annotator:
                 self.processors[key] = BertClient(**item)
             elif item_type == "fasttext":
                 self.processors[key] = KeyedVectors.load(item["path"])
+            elif item_type == "elmo":
+                self.processors[key] = ElmoEmbedder(**item)
             else:
                 assert False, "Unsupported processor in config"
             print("'{}' processor loaded".format(key))
@@ -73,11 +76,12 @@ class Annotator:
         if isinstance(processor, BertClient):
             outputs = processor.encode(inputs)
         elif isinstance(processor, FastTextKeyedVectors):
-            inputs = [tokenize(inp) for inp in inputs]
-            outputs = []
-            for sample in inputs:
-                embedding = np.mean(np.array([processor.wv.word_vec(token) for token in sample]), axis=0)
-                outputs.append(embedding)
+            embeddings = [np.array([processor.wv.word_vec(token.text) for token in tokenize(inp)]) for inp in inputs]
+            outputs = np.array([np.mean(sample, axis=0) for sample in embeddings])
+        elif isinstance(processor, ElmoEmbedder):
+            inputs = [[token.text for token in tokenize(inp)] for inp in inputs]
+            embeddings = processor.batch_to_embeddings(inputs)[0].cpu().numpy()
+            outputs = np.mean(embeddings, axis=2).reshape(embeddings.shape[0], -1)
         else:
             assert False
         for index, info in enumerate(records_to_modify):

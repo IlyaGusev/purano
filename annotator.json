@@ -2,7 +2,8 @@
     "steps": [
         "bert_title",
         "bert_text",
-        "rvs_fasttext_title"
+        "rvs_fasttext_title",
+        "rvs_elmo_title"
     ],
     "processors": {
         "bert_client": {
@@ -13,7 +14,13 @@
         },
         "rvs_fasttext": {
             "type": "fasttext",
-            "path": "/Users/ilya-gusev/Models/rvs_tayga_fasttext/model.model"
+            "path": "/media/yallen/My Passport/Models/rvs_taiga_fasttext/model.model"
+        },
+        "rvs_elmo": {
+            "type": "elmo",
+            "options_file": "/media/yallen/My Passport/Models/rvs_elmo/options.json",
+            "weight_file": "/media/yallen/My Passport/Models/rvs_elmo/model.hdf5",
+            "cuda_device": 0
         }
     },
     "bert_title": {
@@ -30,5 +37,10 @@
         "processor": "rvs_fasttext",
         "input_field": "title",
         "output_field": "title_rvs_fasttext_embedding"
+    },
+    "rvs_elmo_title": {
+        "processor": "rvs_elmo",
+        "input_field": "title",
+        "output_field": "title_rvs_elmo_embedding"
     }
 }
