@@ -103,7 +103,7 @@ def main(config,
     if start_date:
         query = query.filter(Document.date > start_date)
     if end_date:
-        qeury = query.filter(Document.date < end_date)
+        query = query.filter(Document.date < end_date)
     if sort_by_date:
         query = query.order_by(Document.date)
     docs = query.limit(nrows) if nrows else query.all()
