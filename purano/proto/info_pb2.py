@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='info',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"\x89\x01\n\x04Info\x12\x1c\n\x14title_bert_embedding\x18\x01 \x03(\x01\x12\x1b\n\x13text_bert_embedding\x18\x02 \x03(\x01\x12$\n\x1ctitle_rvs_fasttext_embedding\x18\x03 \x03(\x01\x12 \n\x18title_rvs_elmo_embedding\x18\x04 \x03(\x01\x62\x06proto3')
+  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"\xcf\x01\n\x04Info\x12\x1c\n\x14title_bert_embedding\x18\x01 \x03(\x01\x12\x1b\n\x13text_bert_embedding\x18\x02 \x03(\x01\x12$\n\x1ctitle_rvs_fasttext_embedding\x18\x03 \x03(\x01\x12#\n\x1btext_rvs_fasttext_embedding\x18\x04 \x03(\x01\x12 \n\x18title_rvs_elmo_embedding\x18\x05 \x03(\x01\x12\x1f\n\x17text_rvs_elmo_embedding\x18\x06 \x03(\x01\x62\x06proto3')
 )
 
 
@@ -55,8 +55,22 @@ _INFO = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='title_rvs_elmo_embedding', full_name='info.Info.title_rvs_elmo_embedding', index=3,
+      name='text_rvs_fasttext_embedding', full_name='info.Info.text_rvs_fasttext_embedding', index=3,
       number=4, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='title_rvs_elmo_embedding', full_name='info.Info.title_rvs_elmo_embedding', index=4,
+      number=5, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='text_rvs_elmo_embedding', full_name='info.Info.text_rvs_elmo_embedding', index=5,
+      number=6, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -74,7 +88,7 @@ _INFO = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=21,
-  serialized_end=158,
+  serialized_end=228,
 )
 
 DESCRIPTOR.message_types_by_name['Info'] = _INFO

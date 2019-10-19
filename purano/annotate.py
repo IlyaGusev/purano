@@ -1,5 +1,7 @@
 import argparse
 import json
+import time
+import copy
 import numpy as np
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -57,35 +59,61 @@ class Annotator:
                 if not docs_batch:
                     return
 
+        start_time = time.time()
         batch = [InfoPb() for _ in range(len(docs_batch))]
         for step_name in self.config.get("steps"):
-            step = self.config[step_name]
-            processor = self.processors.get(step.get("processor"))
-            input_field = step.get("input_field")
-            output_field = step.get("output_field")
-            self.process(processor, docs_batch, batch, input_field, output_field)
+            step = copy.deepcopy(self.config[step_name])
+            processor = self.processors.get(step.pop("processor"))
+            input_field = step.pop("input_field")
+            output_field = step.pop("output_field")
+            outputs = self.process(processor, docs_batch, input_field, **step)
+            for index, info in enumerate(batch):
+                getattr(info, output_field)[:] = outputs[index]
 
+        process_time = time.time() - start_time
+
+        start_time = time.time()
         batch = [Info(doc.id, info) for doc, info in zip(docs_batch, batch)]
         self.db_session.bulk_save_objects(batch)
         self.db_session.commit()
+        save_time = time.time() - start_time
+
         print("Annotated and saved {} documents, first dated {}".format(len(batch), docs_batch[0].date))
+        print("Processing time: {:.2f} seconds, saving time: {:.2f} seconds".format(process_time, save_time))
 
     @staticmethod
-    def process(processor, docs, records_to_modify, input_field, output_field):
+    def process(processor, docs, input_field, **kwargs):
         inputs = [getattr(doc, input_field) for doc in docs]
         if isinstance(processor, BertClient):
-            outputs = processor.encode(inputs)
-        elif isinstance(processor, FastTextKeyedVectors):
-            embeddings = [np.array([processor.wv.word_vec(token.text) for token in tokenize(inp)]) for inp in inputs]
-            outputs = np.array([np.mean(sample, axis=0) for sample in embeddings])
+            return processor.encode(inputs)
+
+        agg_type = kwargs.pop("agg_type")
+        assert agg_type in ("mean", "max", "mean||max")
+        max_tokens_count = kwargs.pop("max_tokens_count", 100)
+        samples_tokens = [[token.text for token in tokenize(inp)][:max_tokens_count] for inp in inputs]
+        batch_size = len(samples_tokens)
+        max_tokens_count = max([len(sample) for sample in samples_tokens])
+        if isinstance(processor, FastTextKeyedVectors):
+            embeddings = np.zeros((batch_size, max_tokens_count, processor.wv.vector_size), dtype=np.float64)
+            for batch_num, sample in enumerate(samples_tokens):
+                for token_num, token in enumerate(sample):
+                    embeddings[batch_num, token_num, :] = processor.wv.word_vec(token)
         elif isinstance(processor, ElmoEmbedder):
-            inputs = [[token.text for token in tokenize(inp)] for inp in inputs]
-            embeddings = processor.batch_to_embeddings(inputs)[0].cpu().numpy()
-            outputs = np.mean(embeddings, axis=2).reshape(embeddings.shape[0], -1)
+            embeddings = processor.batch_to_embeddings(samples_tokens)[0].cpu().numpy()
+            embeddings = embeddings.swapaxes(1, 2)
+            embeddings = embeddings.reshape(embeddings.shape[0], embeddings.shape[1], -1)
         else:
             assert False
-        for index, info in enumerate(records_to_modify):
-            getattr(info, output_field)[:] = outputs[index]
+        mean_embeddings = np.mean(embeddings, axis=1)
+        max_embeddings = np.max(embeddings, axis=1)
+        if agg_type == "mean":
+            return mean_embeddings
+        if agg_type == "max":
+            return max_embeddings
+        if agg_type == "mean||max":
+            return np.concatenate((mean_embeddings, max_embeddings), axis=1)
+        else:
+            assert False
 
 
 def main(config,

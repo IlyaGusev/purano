@@ -22,6 +22,7 @@ def train_clf(annotations, field):
         return all_topics.index(doc.topics)
 
     X = np.array([to_features(annot) for annot in annotations])
+    print(X.shape)
     y = [to_target(doc) for doc in docs]
     val_border = X.shape[0] * 8 // 10
     test_border = X.shape[0] * 9 // 10
@@ -53,6 +54,7 @@ def main(db_engine, nrows, sort_by_date, start_date, end_date, agency_id, field)
         query = query.filter(Document.agency_id == agency_id)
     if sort_by_date:
         query = query.order_by(Document.date)
+    query = query.filter(Document.topics != None)
     annotations = query.limit(nrows) if nrows else query.all()
     train_clf(annotations, field)
 
