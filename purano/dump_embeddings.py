@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 from purano.models import Document, Info
 
 
-def dump_embeddings(annotations):
+def dump_embeddings_from_info(annotations):
     def to_embedding(annotation):
         return np.array(annotation.get_info().title_bert_embedding)
     vectors = []
@@ -31,13 +31,13 @@ def dump_embeddings(annotations):
     out_m.close()
 
 
-def main(db_engine, nrows):
+def dump_embeddings(db_engine, nrows):
     engine = create_engine(db_engine)
     Session = sessionmaker(bind=engine)
     session = Session()
     query = session.query(Info)
     annotations = list(query.limit(nrows)) if nrows else list(query.all())
-    dump_embeddings(annotations)
+    dump_embeddings_from_info(annotations)
 
 
 if __name__ == "__main__":
@@ -46,4 +46,4 @@ if __name__ == "__main__":
     parser.add_argument("--nrows", type=int, default=1000)
 
     args = parser.parse_args()
-    main(**vars(args))
+    dump_embeddings(**vars(args))

@@ -33,7 +33,7 @@ def process_parser_data(file_name):
     return dataset
 
 
-def main(db_engine, files):
+def parse_csv(db_engine, files):
     engine = create_engine(db_engine)
     Base.metadata.create_all(engine, Base.metadata.tables.values(),checkfirst=True)
 
@@ -71,4 +71,4 @@ if __name__ == "__main__":
     parser.add_argument("--db-engine", type=str, default="sqlite:///news.db")
 
     args = parser.parse_args()
-    main(**vars(args))
+    parse_csv(**vars(args))

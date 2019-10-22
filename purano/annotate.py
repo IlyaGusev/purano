@@ -116,7 +116,7 @@ class Annotator:
             assert False
 
 
-def main(config,
+def annotate(config,
          batch_size,
          db_engine,
          reannotate,
@@ -155,4 +155,4 @@ if __name__ == "__main__":
     parser.add_argument("--nrows", type=int, default=None)
 
     args = parser.parse_args()
-    main(**vars(args))
+    annotate(**vars(args))

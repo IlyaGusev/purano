@@ -40,7 +40,7 @@ def train_clf(annotations, field):
     print(metrics.classification_report(y_test, y_predicted))
 
 
-def main(db_engine, nrows, sort_by_date, start_date, end_date, agency_id, field):
+def train_clf(db_engine, nrows, sort_by_date, start_date, end_date, agency_id, field):
     engine = create_engine(db_engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -70,4 +70,4 @@ if __name__ == "__main__":
     parser.add_argument("--field", type=str, required=True)
 
     args = parser.parse_args()
-    main(**vars(args))
+    train_clf(**vars(args))
