@@ -10,7 +10,7 @@ from catboost import CatBoostClassifier
 from purano.models import Document, Info
 
 
-def train_clf(annotations, field):
+def train_clf_inner(annotations, field):
     annotations = list(annotations)
     docs = [annot.document for annot in annotations]
     all_topics = list({doc.topics for doc in docs})
@@ -56,7 +56,7 @@ def train_clf(db_engine, nrows, sort_by_date, start_date, end_date, agency_id, f
         query = query.order_by(Document.date)
     query = query.filter(Document.topics != None)
     annotations = query.limit(nrows) if nrows else query.all()
-    train_clf(annotations, field)
+    train_clf_inner(annotations, field)
 
 
 if __name__ == "__main__":

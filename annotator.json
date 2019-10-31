@@ -8,30 +8,28 @@
         "rvs_elmo_text"
     ],
     "processors": {
-        "bert_client": {
-            "type": "bert_client",
-            "ip": "localhost",
-            "port": 5555,
-            "port_out": 5556
+        "deeppavlov_bert": {
+            "type": "bert",
+            "pretrained_model_name_or_path": "/media/yallen/My Passport/Models/rubert_cased_L-12_H-768_A-12_v2"
         },
         "rvs_fasttext": {
             "type": "fasttext",
-            "path": "/media/yallen/My Passport/Models/rvs_taiga_fasttext/model.model"
+            "path": "./models/tayga_none_fasttextcbow_300_10_2019/model.model"
         },
         "rvs_elmo": {
             "type": "elmo",
-            "options_file": "/media/yallen/My Passport/Models/rvs_elmo/options.json",
-            "weight_file": "/media/yallen/My Passport/Models/rvs_elmo/model.hdf5",
-            "cuda_device": 0
+            "options_file": "./models/ruwikiruscorpora_tokens_elmo_1024_2019/options.json",
+            "weight_file": "./models/ruwikiruscorpora_tokens_elmo_1024_2019/model.hdf5",
+            "cuda_device": 
         }
     },
     "bert_title": {
-        "processor": "bert_client",
+        "processor": "deeppavlov_bert",
         "input_field": "title",
         "output_field": "title_bert_embedding"
     },
     "bert_text": {
-        "processor": "bert_client",
+        "processor": "deeppavlov_bert",
         "input_field": "text",
         "output_field": "text_bert_embedding"
     },

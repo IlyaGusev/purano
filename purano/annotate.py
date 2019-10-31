@@ -3,6 +3,7 @@ import json
 import time
 import copy
 import numpy as np
+import torch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bert_serving.client import BertClient
@@ -10,9 +11,36 @@ from gensim.models import KeyedVectors
 from gensim.models.keyedvectors import FastTextKeyedVectors
 from allennlp.commands.elmo import ElmoEmbedder
 from razdel import tokenize
+from transformers import BertTokenizer, BertModel
 
 from purano.models import Document, Info
 from purano.proto.info_pb2 import Info as InfoPb
+
+
+class BertProcessor:
+    def __init__(self, pretrained_model_name_or_path):
+        self.pretrained_model_name_or_path = pretrained_model_name_or_path
+        self.tokenizer = BertTokenizer.from_pretrained(pretrained_model_name_or_path)
+        self.model = BertModel.from_pretrained(pretrained_model_name_or_path, output_hidden_states=True)
+        self.max_seq_len = 64
+
+    def encode(self, docs):
+        batch_input_ids = torch.zeros((len(docs), self.max_seq_len), dtype=int)
+        batch_mask = torch.zeros((len(docs), self.max_seq_len), dtype=int)
+        for i, sample in enumerate(docs):
+            input_ids = self.tokenizer.convert_tokens_to_ids(['[CLS]'] + self.tokenizer.tokenize(sample)[:self.max_seq_len-2] + ['[SEP]'])
+            pad_len = self.max_seq_len - len(input_ids)
+            input_mask = [1] * len(input_ids) + [0] * pad_len
+            input_ids += [0] * pad_len
+            batch_input_ids[i, :] = torch.tensor(input_ids)
+            batch_mask[i, :] = torch.tensor(input_mask)
+
+        self.model.eval()
+        with torch.no_grad():
+            all_hidden_states = self.model(batch_input_ids, attention_mask=batch_mask)[-1]
+        embeddings = all_hidden_states[-2].cpu().numpy()
+        embeddings = embeddings.mean(axis=1)
+        return embeddings
 
 
 class Annotator:
@@ -24,6 +52,8 @@ class Annotator:
             item_type = item.pop("type")
             if item_type == "bert_client":
                 self.processors[key] = BertClient(**item)
+            elif item_type == "bert":
+                self.processors[key] = BertProcessor(**item)
             elif item_type == "fasttext":
                 self.processors[key] = KeyedVectors.load(item["path"])
             elif item_type == "elmo":
@@ -83,8 +113,11 @@ class Annotator:
 
     @staticmethod
     def process(processor, docs, input_field, **kwargs):
+        assert processor is not None
+        assert len(docs) > 0
+
         inputs = [getattr(doc, input_field) for doc in docs]
-        if isinstance(processor, BertClient):
+        if isinstance(processor, BertClient) or isinstance(processor, BertProcessor):
             return processor.encode(inputs)
 
         agg_type = kwargs.pop("agg_type")

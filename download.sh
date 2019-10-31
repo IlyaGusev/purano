@@ -10,4 +10,7 @@ cd models/tayga_none_fasttextcbow_300_10_2019 && wget http://vectors.nlpl.eu/rep
 
 # Download datasets
 mkdir datasets
-cd datasets && wget https://www.dropbox.com/s/1mwx1biatskkykr/meduza.tar.gz && tar -xzvf meduza.tar.gz && rm meduza.tar.gz && cd ../
+cd datasets && wget -i datasets.txt && cd ../
+for F in *.tar.gz; do
+    cd datasets && tar -xzvf "$F" && cd ../
+done
