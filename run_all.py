@@ -9,7 +9,7 @@ DATASETS_PATH = "datasets"
 
 
 def run_all(db_engine, config, batch_size):
-    parse_csv(db_engine, [file_path for file_path in os.listdir(DATASETS_PATH) if file_path.endswith(".txt")])
+    parse_csv(db_engine, [file_path for file_path in os.listdir(DATASETS_PATH) if file_path.endswith(".csv")])
     annotate(config, batch_size, db_engine, reannotate=False,
              sort_by_date=True, start_date="2019-01-01", end_date="2019-03-01",
              agency_id=None, nrows=None):

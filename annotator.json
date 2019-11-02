@@ -10,7 +10,7 @@
     "processors": {
         "deeppavlov_bert": {
             "type": "bert",
-            "pretrained_model_name_or_path": "/media/yallen/My Passport/Models/rubert_cased_L-12_H-768_A-12_v2"
+            "pretrained_model_name_or_path": "./models/rubert_cased_L-12_H-768_A-12_v2"
         },
         "rvs_fasttext": {
             "type": "fasttext",
