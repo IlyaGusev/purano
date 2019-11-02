@@ -6,12 +6,12 @@ import numpy as np
 import torch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from bert_serving.client import BertClient
 from gensim.models import KeyedVectors
 from gensim.models.keyedvectors import FastTextKeyedVectors
 from allennlp.commands.elmo import ElmoEmbedder
 from razdel import tokenize
 from transformers import BertTokenizer, BertModel
+from bert_serving.client import BertClient
 
 from purano.models import Document, Info
 from purano.proto.info_pb2 import Info as InfoPb

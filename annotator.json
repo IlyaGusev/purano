@@ -20,7 +20,7 @@
             "type": "elmo",
             "options_file": "./models/ruwikiruscorpora_tokens_elmo_1024_2019/options.json",
             "weight_file": "./models/ruwikiruscorpora_tokens_elmo_1024_2019/model.hdf5",
-            "cuda_device": 
+            "cuda_device": -1
         }
     },
     "bert_title": {

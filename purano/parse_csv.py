@@ -12,7 +12,7 @@ from purano.models import Base, Document, Agency
 def fix_line_feed(input_file_name, output_file_name):
     with open(input_file_name, "r") as r, open(output_file_name, "w") as w:
         for line in r:
-            line = line.replace("\\n", "\\\\n")
+            line = line.replace("\\n", "\\\\n").replace("\\r", " ").replace("\t", " ")
             w.write(line)
 
 
