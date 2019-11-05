@@ -51,7 +51,7 @@ Train a rubric classifier based on the computed embeddings. Mainly it is used to
 
 Example:
 ```
-python -m purano.train_clf --sort-by-date --start-date 2019-01-01 --end-date 2019-02-01 --field title_rvs_elmo_embedding
+python -m purano.train_clf --sort-by-date --start-date 2019-01-01 --end-date 2019-02-01 --agency-id 1 --field title_rvs_elmo_embedding
 ```
 
 | Argument        | Default           | Description                                                   |
