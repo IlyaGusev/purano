@@ -10,7 +10,7 @@ from purano.models import Document, Info
 
 def dump_embeddings_from_info(annotations):
     def to_embedding(annotation):
-        return np.array(annotation.get_info().title_bert_embedding)
+        return np.array(annotation.get_info().title_rvs_elmo_embedding)
     vectors = []
     metadata = []
     for i, annot in enumerate(annotations):

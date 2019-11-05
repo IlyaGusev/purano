@@ -10,14 +10,6 @@ mkdir tayga_none_fasttextcbow_300_10_2019
 cd tayga_none_fasttextcbow_300_10_2019 && wget http://vectors.nlpl.eu/repository/11/187.zip && unzip 187.zip && rm 187.zip && cd ../
 wget -O bert.tar.gz http://files.deeppavlov.ai/deeppavlov_data/bert/rubert_cased_L-12_H-768_A-12_v2.tar.gz && tar -xzvf bert.tar.gz && rm bert.tar.gz && cd ../
 
-# Convert models
-export BERT_BASE_DIR=models/rubert_cased_L-12_H-768_A-12_v2
-transformers bert \
-  $BERT_BASE_DIR/bert_model.ckpt.index \
-  $BERT_BASE_DIR/bert_config.json \
-  $BERT_BASE_DIR/pytorch_model.bin
-mv $BERT_BASE_DIR/bert_config.json $BERT_BASE_DIR/config.json
-
 # Download datasets
 rm -rf datasets
 mkdir datasets

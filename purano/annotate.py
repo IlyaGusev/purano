@@ -1,7 +1,10 @@
+import os
 import argparse
 import json
 import time
 import copy
+
+import _jsonnet
 import numpy as np
 import torch
 from sqlalchemy import create_engine
@@ -10,7 +13,7 @@ from gensim.models import KeyedVectors
 from gensim.models.keyedvectors import FastTextKeyedVectors
 from allennlp.commands.elmo import ElmoEmbedder
 from razdel import tokenize
-from transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer, BertConfig, BertForPreTraining
 from bert_serving.client import BertClient
 
 from purano.models import Document, Info
@@ -18,35 +21,44 @@ from purano.proto.info_pb2 import Info as InfoPb
 
 
 class BertProcessor:
-    def __init__(self, pretrained_model_name_or_path):
-        self.pretrained_model_name_or_path = pretrained_model_name_or_path
+    def __init__(self,
+                 pretrained_model_name_or_path,
+                 max_tokens_count=64,
+                 config_file_name="bert_config.json",
+                 model_ckpt_file_name="bert_model.ckpt.index",
+                 layer=-2):
+        config_full_path = os.path.join(pretrained_model_name_or_path, config_file_name)
+        ckpt_full_path = os.path.join(pretrained_model_name_or_path, model_ckpt_file_name)
+
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_model_name_or_path)
-        self.model = BertModel.from_pretrained(pretrained_model_name_or_path, output_hidden_states=True)
-        self.max_seq_len = 64
+        config = BertConfig.from_json_file(config_full_path)
+        config.output_hidden_states = True
+        self.model = BertForPreTraining.from_pretrained(ckpt_full_path, from_tf=True, config=config).bert
+        self.max_tokens_count = max_tokens_count
+        self.layer = layer
 
     def encode(self, docs):
-        batch_input_ids = torch.zeros((len(docs), self.max_seq_len), dtype=int)
-        batch_mask = torch.zeros((len(docs), self.max_seq_len), dtype=int)
+        batch_input_ids = torch.zeros((len(docs), self.max_tokens_count), dtype=int)
+        batch_mask = torch.zeros((len(docs), self.max_tokens_count), dtype=int)
         for i, sample in enumerate(docs):
-            input_ids = self.tokenizer.convert_tokens_to_ids(['[CLS]'] + self.tokenizer.tokenize(sample)[:self.max_seq_len-2] + ['[SEP]'])
-            pad_len = self.max_seq_len - len(input_ids)
-            input_mask = [1] * len(input_ids) + [0] * pad_len
-            input_ids += [0] * pad_len
-            batch_input_ids[i, :] = torch.tensor(input_ids)
-            batch_mask[i, :] = torch.tensor(input_mask)
+            tokens = self.tokenizer.tokenize(sample)
+            tokens = ['[CLS]'] + tokens[:self.max_tokens_count-2] + ['[SEP]']
+            input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+            batch_input_ids[i, :len(input_ids)] = torch.tensor(input_ids)
+            batch_mask[i, :len(input_ids)] = torch.ones((len(input_ids), ), dtype=int)
 
         self.model.eval()
         with torch.no_grad():
-            all_hidden_states = self.model(batch_input_ids, attention_mask=batch_mask)[-1]
-        embeddings = all_hidden_states[-2].cpu().numpy()
-        embeddings = embeddings.mean(axis=1)
+            output = self.model(batch_input_ids, attention_mask=batch_mask)[-1]
+        output = output[self.layer]
+        embeddings = output.cpu().numpy()
+        embeddings = np.concatenate((embeddings.mean(axis=1), embeddings.max(axis=1)), axis=1)
         return embeddings
 
 
 class Annotator:
     def __init__(self, db_session, config_path):
-        with open(config_path) as r:
-            self.config = json.load(r)
+        self.config = json.loads(_jsonnet.evaluate_file(config_path))
         self.processors = dict()
         for key, item in self.config["processors"].items():
             item_type = item.pop("type")
@@ -91,16 +103,18 @@ class Annotator:
 
         start_time = time.time()
         batch = [InfoPb() for _ in range(len(docs_batch))]
+        processor_time = {}
         for step_name in self.config.get("steps"):
             step = copy.deepcopy(self.config[step_name])
-            processor = self.processors.get(step.pop("processor"))
+            processor_name = step.pop("processor")
+            processor = self.processors.get(processor_name)
             input_field = step.pop("input_field")
             output_field = step.pop("output_field")
             outputs = self.process(processor, docs_batch, input_field, **step)
+            processor_time[processor_name] = time.time() - start_time
+            start_time = time.time()
             for index, info in enumerate(batch):
                 getattr(info, output_field)[:] = outputs[index]
-
-        process_time = time.time() - start_time
 
         start_time = time.time()
         batch = [Info(doc.id, info) for doc, info in zip(docs_batch, batch)]
@@ -108,8 +122,11 @@ class Annotator:
         self.db_session.commit()
         save_time = time.time() - start_time
 
-        print("Annotated and saved {} documents, first dated {}".format(len(batch), docs_batch[0].date))
-        print("Processing time: {:.2f} seconds, saving time: {:.2f} seconds".format(process_time, save_time))
+        print("Annotated and saved {} documents, last dated {}".format(len(batch), docs_batch[-1].date))
+        print("Processing time:")
+        for p, t in processor_time.items():
+            print("{}: {:.2f} seconds".format(p, t))
+        print("Saving time: {:.2f} seconds".format(save_time))
 
     @staticmethod
     def process(processor, docs, input_field, **kwargs):
@@ -150,14 +167,15 @@ class Annotator:
 
 
 def annotate(config,
-         batch_size,
-         db_engine,
-         reannotate,
-         sort_by_date,
-         start_date,
-         end_date,
-         agency_id,
-         nrows):
+             batch_size,
+             db_engine,
+             reannotate,
+             sort_by_date,
+             start_date,
+             end_date,
+             agency_id,
+             nrows):
+    assert config.endswith(".jsonnet"), "Config should be jsonnet file"
     engine = create_engine(db_engine)
     Session = sessionmaker(bind=engine)
     session = Session()

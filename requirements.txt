@@ -1,8 +1,10 @@
 numpy
 pandas
+jsonnet
 sqlalchemy
 sklearn
-tensorflow<2.0.0
+tensorflow
+tensorboardX
 bert-serving-client
 bert-serving-server
 protobuf
