@@ -1,4 +1,5 @@
 import argparse
+from collections import defaultdict, Counter
 import numpy as np
 import io
 from sqlalchemy import create_engine
@@ -8,6 +9,13 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import pairwise_distances
 
 from purano.models import Document, Info
+
+# TODO: time-based embeddings
+# TODO: agency2vec
+# TODO: agglomerative clustering border
+# TODO: dbscan
+# TODO: clustering markup
+# TODO: extracting geo
 
 
 class SampleMetadata:
@@ -43,7 +51,7 @@ def calc_distances(vectors, metadata):
     return distances
 
 
-def dump_embeddings_from_info(annotations, field):
+def fetch_embeddings(annotations, field):
     def to_embedding(annotation):
         return np.array(getattr(annotation.get_info(), field))
 
@@ -60,32 +68,53 @@ def dump_embeddings_from_info(annotations, field):
         meta.title = document.title.replace("\n", "").strip()
         metadata.append(meta)
     vectors = np.array(vectors)
-    distances = calc_distances(vectors, metadata)
+    return vectors, metadata
 
+
+def run_agglomerative_clustering(distances):
     clustering = AgglomerativeClustering(
         affinity="precomputed",
-        distance_threshold=0.03,
+        distance_threshold=0.04,
         n_clusters=None,
         linkage="average")
     labels = clustering.fit_predict(distances)
     print(labels)
-    for meta, label in zip(metadata, labels):
-        meta.cluster = str(label)
+    return labels
 
+
+def save_to_tensorboard(vectors, metadata):
     writer = SummaryWriter()
     writer.add_embedding(vectors, metadata, metadata_header=SampleMetadata.get_header())
     writer.close()
 
-    out_v = io.open('vecs.tsv', 'w', encoding='utf-8')
-    out_m = io.open('meta.tsv', 'w', encoding='utf-8')
-    for vec, meta in zip(vectors, metadata):
-        out_m.write("\t".join(meta) + "\n")
-        out_v.write("\t".join([str(x) for x in vec]) + "\n")
-    out_v.close()
-    out_m.close()
+
+def print_clusters_info(metadata, n=5):
+    clusters = defaultdict(list)
+    for meta in metadata:
+        clusters[meta.cluster].append(meta)
+    clusters = list(clusters.items())
+    clusters.sort(key=lambda x: len(x[1]), reverse=True)
+
+    max_cluster_size = len(clusters[0][1])
+    print("Max cluster size: {}".format(max_cluster_size))
+
+    clusters_count = [0 for _ in range(max_cluster_size + 1)]
+    for _, cluster in clusters:
+        clusters_count[len(cluster)] += 1
+    for cluster_size, count in enumerate(clusters_count):
+        if count == 0:
+            continue
+        print("{} clusters with size {}".format(count, cluster_size))
+
+    clusters = clusters[:n]
+    for cluster_num, cluster in clusters:
+        print("Cluster {}: ".format(cluster_num))
+        for meta in cluster:
+            print(meta.title)
+        print()
 
 
-def dump_embeddings(db_engine, nrows, field, sort_by_date, start_date, end_date):
+def cluster(db_engine, nrows, field, sort_by_date, start_date, end_date):
     engine = create_engine(db_engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -99,7 +128,13 @@ def dump_embeddings(db_engine, nrows, field, sort_by_date, start_date, end_date)
     if sort_by_date:
         query = query.order_by(Document.date)
     annotations = list(query.limit(nrows)) if nrows else list(query.all())
-    dump_embeddings_from_info(annotations, field)
+    vectors, metadata = fetch_embeddings(annotations, field)
+    distances = calc_distances(vectors, metadata)
+    labels = run_agglomerative_clustering(distances)
+    for meta, label in zip(metadata, labels):
+        meta.cluster = str(label)
+    save_to_tensorboard(vectors, metadata)
+    print_clusters_info(metadata)
 
 
 if __name__ == "__main__":
@@ -112,4 +147,4 @@ if __name__ == "__main__":
     parser.add_argument("--end-date", type=str, default=None)
 
     args = parser.parse_args()
-    dump_embeddings(**vars(args))
+    cluster(**vars(args))
