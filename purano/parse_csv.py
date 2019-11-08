@@ -17,7 +17,7 @@ def fix_line_feed(input_file_name, output_file_name):
             w.write(line)
 
 
-def process_parser_data(file_name):
+def process_parser_data(file_name, start_date, end_date):
     dataset = pd.read_csv(
         file_name, sep=',', quotechar='\"', escapechar='\\',
         encoding='utf-8', error_bad_lines=False, header=0,
@@ -29,19 +29,21 @@ def process_parser_data(file_name):
     dataset["edition"] = dataset["edition"].apply(lambda x: None if x == "-" else x)
     # TODO: sort by date
     # TODO: undup
+    dataset = dataset[dataset["date"] >= start_date]
+    dataset = dataset[dataset["date"] < end_date]
     print(dataset.info())
     print(dataset.head(5))
     return dataset
 
 
-def parse_csv(db_engine, files):
+def parse_csv(db_engine, files, start_date, end_date):
     engine = create_engine(db_engine)
     Base.metadata.create_all(engine, Base.metadata.tables.values(),checkfirst=True)
 
     for file_name in files:
         temp_file = NamedTemporaryFile(delete=False)
         fix_line_feed(file_name, temp_file.name)
-        dataset = process_parser_data(temp_file.name)
+        dataset = process_parser_data(temp_file.name, start_date, end_date)
         temp_file.close()
         os.unlink(temp_file.name)
 
@@ -70,6 +72,8 @@ if __name__ == "__main__":
         required=True
     )
     parser.add_argument("--db-engine", type=str, default="sqlite:///news.db")
+    parser.add_argument("--start-date", type=str, default=None)
+    parser.add_argument("--end-date", type=str, default=None)
 
     args = parser.parse_args()
     parse_csv(**vars(args))

@@ -3,7 +3,8 @@
         #"bert_title",
         "rvs_fasttext_title",
         "rvs_fasttext_text",
-        "rvs_elmo_title"
+        "rvs_elmo_title",
+        "rvs_elmo_text"
     ],
     "processors": {
         #"deeppavlov_bert": {
@@ -44,5 +45,12 @@
         "agg_type": "mean||max",
         "input_field": "title",
         "output_field": "title_rvs_elmo_embedding"
+    },
+    "rvs_elmo_text": {
+        "processor": "rvs_elmo",
+        "agg_type": "mean||max",
+        "input_field": "text",
+        "output_field": "text_rvs_elmo_embedding",
+        "max_tokens_count": 200
     }
 }
