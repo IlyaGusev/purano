@@ -16,7 +16,7 @@ Parse files with comma separated values with news documents from [proj_news_viz]
 
 Example:
 ```
-python -m purano.parse_csv -f ~/datasets/interfax_20160101_20191015.csv
+python -m purano.parse_csv -f ~/datasets/interfax_20160101_20191015.csv --start-date 2019-01-01 --end-date 2019-02-01
 ```
 
 | Argument      | Default           | Description                                                   |
@@ -47,7 +47,7 @@ python -m purano.annotate --sort-by-date --start-date 2019-01-01 --end-date 2019
 
 #### [train_clf](purano/train_clf.py)
 
-Train a rubric classifier based on the computed embeddings. Mainly it is used to evaluate embeddings quality.
+Train a rubric classifier based on the computed embeddings. It is mainly used to evaluate embeddings quality.
 
 Example:
 ```
@@ -70,5 +70,24 @@ python -m purano.train_clf --sort-by-date --start-date 2019-01-01 --end-date 201
 | --test-part     | 0.1               | test part                                                     |
 
 
+#### [train_clf](purano/cluster.py)
+
+Embedding-based clustering of news from different sources.
+
+Example:
+```
+python -m purano.cluster --sort-by-date --start-date 2019-01-01 --end-date 2019-02-01 --agency-id 1 --field title_text_rvs_elmo_embedding --clustering-type agglomerative
+```
+
+| Argument        | Default           | Description                                                   |
+|:----------------|:------------------|:--------------------------------------------------------------|
+| --db-engine     | sqlite:///news.db | database type and path                                        |
+| --sort-by-date  | False             | whether to sort documents by date before annotation           |
+| --start-date    | None              | filter documents by start date                                |
+| --end-date      | None              | filter documents by end date                                  |
+| --agency-id     | None              | filter documents by agency id                                 |
+| --nrows         | None              | limit number of documents                                     |
+| --field         |                   | embedding type from proto schema                              |
+| --clustering-type      |               | clastering type ("agglomerative" or "dbscan")                         |
 
 
