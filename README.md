@@ -76,7 +76,7 @@ Embedding-based clustering of news from different sources.
 
 Example:
 ```
-python -m purano.cluster --sort-by-date --start-date 2019-01-01 --end-date 2019-02-01 --agency-id 1 --field title_text_rvs_elmo_embedding --clustering-type agglomerative
+python -m purano.cluster --sort-by-date --start-date 2019-01-01 --end-date 2019-02-01 --field title_text_rvs_elmo_embedding --clustering-type agglomerative
 ```
 
 | Argument        | Default           | Description                                                   |
@@ -85,7 +85,6 @@ python -m purano.cluster --sort-by-date --start-date 2019-01-01 --end-date 2019-
 | --sort-by-date  | False             | whether to sort documents by date before annotation           |
 | --start-date    | None              | filter documents by start date                                |
 | --end-date      | None              | filter documents by end date                                  |
-| --agency-id     | None              | filter documents by agency id                                 |
 | --nrows         | None              | limit number of documents                                     |
 | --field         |                   | embedding type from proto schema                              |
 | --clustering-type      |               | clastering type ("agglomerative" or "dbscan")                         |
