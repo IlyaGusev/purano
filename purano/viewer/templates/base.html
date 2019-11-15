@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <link href="/static/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+
+    <title>Viewer</title>
+    <link rel="stylesheet" href="/static/css/lib/bootstrap.min.css">
+    <script src="/static/js/lib/jquery-3.4.1.min.js"></script>
+    <script src="/static/js/lib/bootstrap.min.js"></script>
+    {% block head %}
+    {% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="/">Viewer</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="/">Главная</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div style="padding-top: 20px;" class="container">
+{% block content %}
+{% endblock %}
+</div>
+</body>
