@@ -70,7 +70,7 @@ python -m purano.train_clf --sort-by-date --start-date 2019-01-01 --end-date 201
 | --test-part     | 0.1               | test part                                                     |
 
 
-#### [train_clf](purano/cluster.py)
+#### [cluster](purano/cluster.py)
 
 Embedding-based clustering of news from different sources.
 
