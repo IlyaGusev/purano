@@ -27,10 +27,13 @@ def process_parser_data(file_name, start_date, end_date):
     dataset["date"] = pd.to_datetime(dataset["date"])
     dataset["text"] = dataset["text"].apply(lambda x: x.replace("\\n", " "))
     dataset["edition"] = dataset["edition"].apply(lambda x: None if x == "-" else x)
-    # TODO: sort by date
-    # TODO: undup
-    dataset = dataset[dataset["date"] >= start_date]
-    dataset = dataset[dataset["date"] < end_date]
+    if start_date:
+        dataset = dataset[dataset["date"] >= start_date]
+    if end_date:
+        dataset = dataset[dataset["date"] < end_date]
+    dataset.sort_values("date", inplace=True)
+    dataset.drop_duplicates(subset=["title", "text"], keep='last', inplace=True)
+    dataset.drop_duplicates(subset=["url"], keep='last', inplace=True)
     print(dataset.info())
     print(dataset.head(5))
     return dataset

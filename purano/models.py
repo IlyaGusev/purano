@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Date, ForeignKey, Integer
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from purano.proto.info_pb2 import Info as InfoPb
@@ -19,7 +19,7 @@ class Document(Base):
 
     id = Column(Integer, primary_key=True)
     url = Column(String, unique=True, nullable=False)
-    date = Column(Date, nullable=False)
+    date = Column(DateTime, nullable=False)
     edition = Column(String, nullable=True)
     text = Column(Text)
     title = Column(Text)

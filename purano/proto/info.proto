@@ -2,6 +2,18 @@ syntax = "proto3";
 
 package info;
 
+message EntitySpan {
+    uint64 begin = 1;
+    uint64 end = 2;
+    enum Tag {
+        LOC = 0;
+        PER = 1;
+        ORG = 2;
+    }
+    Tag tag = 3;
+    string text = 4;
+}
+
 message Info {
     repeated double title_bert_embedding = 1;
     repeated double text_bert_embedding = 2;
@@ -9,4 +21,8 @@ message Info {
     repeated double text_rvs_fasttext_embedding = 4;
     repeated double title_rvs_elmo_embedding = 5;
     repeated double text_rvs_elmo_embedding = 6;
+    repeated double title_text_rvs_elmo_embedding = 7;
+    repeated double title_text_rvs_fasttext_embedding = 8;
+    repeated EntitySpan title_dp_ner = 9;
+    repeated EntitySpan text_dp_ner = 10;
 }

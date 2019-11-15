@@ -3,7 +3,9 @@ import argparse
 import json
 import time
 import copy
+from collections import namedtuple
 
+import requests
 import _jsonnet
 import numpy as np
 import torch
@@ -17,7 +19,7 @@ from transformers import BertTokenizer, BertConfig, BertForPreTraining
 from bert_serving.client import BertClient
 
 from purano.models import Document, Info
-from purano.proto.info_pb2 import Info as InfoPb
+from purano.proto.info_pb2 import Info as InfoPb, EntitySpan as EntitySpanPb
 
 
 class BertProcessor:
@@ -56,6 +58,48 @@ class BertProcessor:
         return embeddings
 
 
+class NerClient:
+    NerSpan = namedtuple("Span", "text,begin,end,tag")
+
+    def __init__(self, ip, port, max_char_count):
+        self.ip = ip
+        self.port = port
+        self.max_char_count = max_char_count
+
+    def encode(self, docs):
+        docs = [doc[:self.max_char_count] for doc in docs]
+        data = {"x": docs}
+        data = json.dumps(data)
+        r = requests.post("http://{ip}:{port}/model".format(ip=self.ip, port=self.port), data=data)
+        answers = r.json()
+        outputs = []
+        for text, (tokens, tags) in zip(docs, answers):
+            spans = self.get_spans(text, tokens, tags)
+            outputs.append(spans)
+        return outputs
+
+    @classmethod
+    def get_spans(cls, text, tokens, tags):
+        begin = 0
+        spans = []
+        for token, tag in zip(tokens, tags):
+            token_begin = text.find(token, begin)
+            token_end = token_begin + len(token)
+            begin = token_end
+            if tag.startswith("B"):
+                entity_span = EntitySpanPb()
+                entity_span.begin = token_begin
+                entity_span.end = token_end
+                tag_name = tag.split("-")[-1].strip()
+                entity_span.tag = EntitySpanPb.Tag.Value(tag_name)
+                spans.append(entity_span)
+            elif tag.startswith("I") and spans:
+                spans[-1].end = token_end
+        for span in spans:
+            span.text = text[span.begin:span.end]
+        return spans
+
+
 class Annotator:
     def __init__(self, db_session, config_path):
         self.config = json.loads(_jsonnet.evaluate_file(config_path))
@@ -70,6 +114,8 @@ class Annotator:
                 self.processors[key] = KeyedVectors.load(item["path"])
             elif item_type == "elmo":
                 self.processors[key] = ElmoEmbedder(**item)
+            elif item_type == "ner_client":
+                self.processors[key] = NerClient(**item)
             else:
                 assert False, "Unsupported processor in config"
             print("'{}' processor loaded".format(key))
@@ -103,18 +149,18 @@ class Annotator:
 
         start_time = time.time()
         batch = [InfoPb() for _ in range(len(docs_batch))]
-        processor_time = {}
+        step_time = {}
         for step_name in self.config.get("steps"):
             step = copy.deepcopy(self.config[step_name])
             processor_name = step.pop("processor")
             processor = self.processors.get(processor_name)
-            input_field = step.pop("input_field")
+            input_fields = step.pop("input_fields")
             output_field = step.pop("output_field")
-            outputs = self.process(processor, docs_batch, input_field, **step)
-            processor_time[processor_name] = time.time() - start_time
+            outputs = self.process(processor, docs_batch, input_fields, **step)
+            step_time[step_name] = time.time() - start_time
             start_time = time.time()
             for index, info in enumerate(batch):
-                getattr(info, output_field)[:] = outputs[index]
+                getattr(info, output_field).extend(outputs[index])
 
         start_time = time.time()
         batch = [Info(doc.id, info) for doc, info in zip(docs_batch, batch)]
@@ -124,17 +170,20 @@ class Annotator:
 
         print("Annotated and saved {} documents, last dated {}".format(len(batch), docs_batch[-1].date))
         print("Processing time:")
-        for p, t in processor_time.items():
+        for p, t in step_time.items():
             print("{}: {:.2f} seconds".format(p, t))
         print("Saving time: {:.2f} seconds".format(save_time))
 
     @staticmethod
-    def process(processor, docs, input_field, **kwargs):
+    def process(processor, docs, input_fields, **kwargs):
         assert processor is not None
         assert len(docs) > 0
 
-        inputs = [getattr(doc, input_field) for doc in docs]
+        inputs = ["\n".join([getattr(doc, field) for field in input_fields]) for doc in docs]
         if isinstance(processor, BertClient) or isinstance(processor, BertProcessor):
+            return processor.encode(inputs)
+
+        if isinstance(processor, NerClient):
             return processor.encode(inputs)
 
         agg_type = kwargs.pop("agg_type")
