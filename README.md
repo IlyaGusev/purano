@@ -28,6 +28,9 @@ python -m purano.parse_csv -f ~/datasets/interfax_20160101_20191015.csv --start-
 
 Compute different text embeddings based on word2vec/fasttext/ELMo/BERT models. Config defines what models to use and in what way. Embeddings are stored as [protobufs](https://developers.google.com/protocol-buffers) in separate SQLite table column, schema can be found in [info.proto](purano/proto/info.proto). To modify schema simply change [info.proto](purano/proto/info.proto) and run [compile_proto.sh](compile_proto.sh).
 
+[BertClient](https://bert-as-service.readthedocs.io/en/latest/source/client.html) is supported as a processor type. You can also use NER server from [DeepPavlov](http://docs.deeppavlov.ai/en/master/integrations/rest_api.html).
+
+
 Example:
 ```
 python -m purano.annotate --sort-by-date --start-date 2019-01-01 --end-date 2019-02-01 --config annotator.jsonnet --reannotate
@@ -72,7 +75,7 @@ python -m purano.train_clf --sort-by-date --start-date 2019-01-01 --end-date 201
 
 #### [cluster](purano/cluster.py)
 
-Embedding-based clustering of news from different sources.
+Cluster news from different sources using text embeddings.
 
 Example:
 ```
