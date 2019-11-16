@@ -1,14 +1,29 @@
-numpy
-pandas
-jsonnet
-sqlalchemy
-sklearn
-tensorflow
-tensorboardX
-bert-serving-client
-bert-serving-server
-protobuf
-catboost
-seaborn
-gensim
-allennlp
+# Library dependencies for the python code.  You need to install these with
+# `pip install -r requirements.txt` before you can run this.
+
+# Classic machine learning packages.
+numpy >= 1.16.0
+pandas >= 0.24.0
+scikit-learn >= 0.21.0
+catboost >= 0.17.5
+
+# Deep learning packages.
+torch >= 1.2.0
+tensorflow >= 2.0.0
+tensorboardX >= 1.9
+bert-serving-client >= 1.9.6
+
+# Infrasturcture: packages for configuration and database management.
+jsonnet >= 0.10.0
+sqlalchemy >= 1.2.0
+protobuf >= 3.10.0
+flask >= 1.1.1
+
+# Natural language processing packages.
+gensim == 3.8.1
+allennlp >= 0.9.0
+
+# Packages for visualizations.
+jupyter >= 1.0.0
+seaborn >= 0.9.0
+ipymarkup >= 0.5.0

@@ -11,7 +11,6 @@ message EntitySpan {
         ORG = 2;
     }
     Tag tag = 3;
-    string text = 4;
 }
 
 message Info {

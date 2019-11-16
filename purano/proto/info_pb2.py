@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='info',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"{\n\nEntitySpan\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x04\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x04\x12!\n\x03tag\x18\x03 \x01(\x0e\x32\x14.info.EntitySpan.Tag\x12\x0c\n\x04text\x18\x04 \x01(\t\" \n\x03Tag\x12\x07\n\x03LOC\x10\x00\x12\x07\n\x03PER\x10\x01\x12\x07\n\x03ORG\x10\x02\"\xf0\x02\n\x04Info\x12\x1c\n\x14title_bert_embedding\x18\x01 \x03(\x01\x12\x1b\n\x13text_bert_embedding\x18\x02 \x03(\x01\x12$\n\x1ctitle_rvs_fasttext_embedding\x18\x03 \x03(\x01\x12#\n\x1btext_rvs_fasttext_embedding\x18\x04 \x03(\x01\x12 \n\x18title_rvs_elmo_embedding\x18\x05 \x03(\x01\x12\x1f\n\x17text_rvs_elmo_embedding\x18\x06 \x03(\x01\x12%\n\x1dtitle_text_rvs_elmo_embedding\x18\x07 \x03(\x01\x12)\n!title_text_rvs_fasttext_embedding\x18\x08 \x03(\x01\x12&\n\x0ctitle_dp_ner\x18\t \x03(\x0b\x32\x10.info.EntitySpan\x12%\n\x0btext_dp_ner\x18\n \x03(\x0b\x32\x10.info.EntitySpanb\x06proto3')
+  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"m\n\nEntitySpan\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x04\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x04\x12!\n\x03tag\x18\x03 \x01(\x0e\x32\x14.info.EntitySpan.Tag\" \n\x03Tag\x12\x07\n\x03LOC\x10\x00\x12\x07\n\x03PER\x10\x01\x12\x07\n\x03ORG\x10\x02\"\xf0\x02\n\x04Info\x12\x1c\n\x14title_bert_embedding\x18\x01 \x03(\x01\x12\x1b\n\x13text_bert_embedding\x18\x02 \x03(\x01\x12$\n\x1ctitle_rvs_fasttext_embedding\x18\x03 \x03(\x01\x12#\n\x1btext_rvs_fasttext_embedding\x18\x04 \x03(\x01\x12 \n\x18title_rvs_elmo_embedding\x18\x05 \x03(\x01\x12\x1f\n\x17text_rvs_elmo_embedding\x18\x06 \x03(\x01\x12%\n\x1dtitle_text_rvs_elmo_embedding\x18\x07 \x03(\x01\x12)\n!title_text_rvs_fasttext_embedding\x18\x08 \x03(\x01\x12&\n\x0ctitle_dp_ner\x18\t \x03(\x0b\x32\x10.info.EntitySpan\x12%\n\x0btext_dp_ner\x18\n \x03(\x0b\x32\x10.info.EntitySpanb\x06proto3')
 )
 
 
@@ -46,8 +46,8 @@ _ENTITYSPAN_TAG = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=111,
-  serialized_end=143,
+  serialized_start=97,
+  serialized_end=129,
 )
 _sym_db.RegisterEnumDescriptor(_ENTITYSPAN_TAG)
 
@@ -80,13 +80,6 @@ _ENTITYSPAN = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='text', full_name='info.EntitySpan.text', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -101,7 +94,7 @@ _ENTITYSPAN = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=20,
-  serialized_end=143,
+  serialized_end=129,
 )
 
 
@@ -194,8 +187,8 @@ _INFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=146,
-  serialized_end=514,
+  serialized_start=132,
+  serialized_end=500,
 )
 
 _ENTITYSPAN.fields_by_name['tag'].enum_type = _ENTITYSPAN_TAG
