@@ -46,3 +46,6 @@ class Info(Base):
         info = InfoPb()
         info.ParseFromString(self.info)
         return info
+
+    def __getitem__(self, field):
+        return getattr(self.get_info(), field)

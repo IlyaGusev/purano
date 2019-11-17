@@ -8,8 +8,11 @@ from torch.utils.tensorboard import SummaryWriter
 from sklearn.cluster import AgglomerativeClustering, DBSCAN
 from sklearn.metrics import pairwise_distances
 from scipy.special import expit
+from razdel import tokenize
+from nltk.stem.snowball import SnowballStemmer
 
 from purano.models import Document, Info
+from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
 
 # TODO: time-based embeddings
 # TODO: fix time by changing distances
@@ -27,6 +30,8 @@ class SampleMetadata:
         self.cluster = None
         self.topic = None
         self.date = None
+        self.loc = set()
+        self.per = set()
 
     @classmethod
     def get_header(self):
@@ -43,33 +48,40 @@ class SampleMetadata:
         return "{}\t{}\t{}\t{}\n".format(self.title, self.topic, self.agency, self.cluster, self.date)
 
 
-def calc_distances(vectors, metadata, fix_agencies=True, fix_time=True):
+def calc_distances(vectors, metadata,
+                   fix_agencies=True, agencies_penalty=5.0,
+                   fix_time=True, time_penalty=10.0,
+                   fix_entities=False, entities_penalty=3.0):
     distances = pairwise_distances(vectors, metric="cosine")
+    if not fix_agencies and not fix_time and not fix_entities:
+        return distances
+
+    def calc_penalty(meta1, meta2):
+        penalty = 1.0
+        if fix_agencies and meta1.agency == meta2.agency:
+            penalty *= agencies_penalty
+        if fix_time:
+            time_diff = abs((meta1.date - meta2.date).total_seconds())
+            x = (time_diff / 3600) - 12
+            penalty *= 1.0 + expit(x) * (time_penalty - 1.0)
+        if fix_entities:
+            if meta1.loc and meta2.loc and not (meta1.loc & meta2.loc):
+                penalty *= entities_penalty
+            if meta1.per and meta2.per and not (meta1.per & meta2.per):
+                penalty *= entities_penalty
+        return penalty
+
     max_distance = distances.max()
-    if fix_agencies or fix_time:
-        for i in range(len(distances)):
-            for j in range(len(distances)):
-                if i == j:
-                    continue
-                first_meta = metadata[i]
-                second_meta = metadata[j]
-                if fix_agencies and first_meta.agency == second_meta.agency:
-                    distances[i, j] = min(max_distance, distances[i, j] * 5)
-                if fix_time:
-                    first_date = first_meta.date
-                    second_date = second_meta.date
-                    time_diff = first_date - second_date if first_date > second_date else second_date - first_date
-                    seconds_diff = time_diff.total_seconds()
-                    x = (seconds_diff - 12 * 60 * 60) / (60 * 60)
-                    coef = 1.0 + expit(x) * 9.0
-                    distances[i, j] = min(max_distance, distances[i, j] * coef)
+    for i in range(len(distances)):
+        for j in range(len(distances)):
+            if i == j:
+                continue
+            penalty = calc_penalty(metadata[i], metadata[j])
+            distances[i, j] = min(max_distance, distances[i, j] * penalty)
     return distances
 
 
-def fetch_data(annotations, field, encode_date=False):
-    def to_embedding(annotation):
-        return np.array(getattr(annotation.get_info(), field))
-
+def fetch_data(annotations, field, encode_date=False, save_entities=False):
     def encode_circular_feature(current_value, max_value):
         sin = np.sin(2*np.pi*current_value/max_value)
         cos = np.cos(2*np.pi*current_value/max_value)
@@ -77,10 +89,13 @@ def fetch_data(annotations, field, encode_date=False):
 
     vectors = []
     metadata = []
+    stemmer = None
+    if save_entities:
+        stemmer = SnowballStemmer("russian")
     for i, annot in enumerate(annotations):
         if i % 100 == 0:
             print(i)
-        vector = to_embedding(annot)
+        vector = np.array(annot[field])
         document = annot.document
 
         if encode_date:
@@ -94,13 +109,42 @@ def fetch_data(annotations, field, encode_date=False):
             sin_day, cos_day = encode_circular_feature(day_of_year, days_in_year)
             new_features = (sin_time, cos_time, sin_day, cos_day)
             vector = np.append(vector, new_features)
-
         vectors.append(vector)
+
         meta = SampleMetadata()
         meta.topic = document.topics.strip().replace("\n", "") if annot.document.topics else "None"
         meta.agency = document.agency.host.strip().replace("\n", "")
         meta.title = document.title.replace("\n", "").strip()
         meta.date = document.date
+
+        if save_entities:
+            title_spans = annot.get_info().title_dp_ner
+            text_spans = annot.get_info().text_dp_ner
+            loc = list()
+            per = list()
+            def normalize(text):
+                return [stemmer.stem(token.text) for token in tokenize(text)]
+
+            def collect_entities(spans, text):
+                for span in spans:
+                    span_text = normalize(text[span.begin:span.end])
+                    if span.tag == EntitySpanPb.Tag.Value("LOC"):
+                        loc.extend(span_text)
+                    elif span.tag == EntitySpanPb.Tag.Value("PER"):
+                        per.extend(span_text)
+            collect_entities(title_spans, document.title)
+            collect_entities(text_spans, document.text)
+            def choose_best(entities, bans):
+                best = set()
+                entities = Counter(entities)
+                max_count = entities.most_common(1)[0][1] if entities else 0
+                for entity, count in entities.items():
+                    if max_count == count and entity not in bans:
+                        best.add(entity)
+                return best
+            meta.loc = choose_best(loc, {"москв", "росс"})
+            meta.per = choose_best(per, set())
+
         metadata.append(meta)
     vectors = np.array(vectors)
     return vectors, metadata
