@@ -1,3 +1,4 @@
+import json
 import argparse
 from collections import defaultdict, Counter
 import numpy as np
@@ -14,8 +15,6 @@ from nltk.stem.snowball import SnowballStemmer
 from purano.models import Document, Info
 from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
 
-# TODO: time-based embeddings
-# TODO: fix time by changing distances
 # TODO: agency2vec
 # TODO: agglomerative clustering border
 # TODO: dbscan
@@ -25,27 +24,28 @@ from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
 
 class SampleMetadata:
     def __init__(self):
+        self.url = None
         self.title = None
+        self.topic = None
         self.agency = None
         self.cluster = None
-        self.topic = None
         self.date = None
+
         self.loc = set()
         self.per = set()
 
     @classmethod
     def get_header(self):
-        return ("title", "topic", "agency", "cluster", "date")
+        return ("url", "title", "topic", "agency", "cluster", "date")
 
     def __iter__(self):
-        return iter([self.title, self.topic, self.agency, self.cluster, self.date])
+        return iter([self.url, self.title, self.topic, self.agency, self.cluster, str(self.date)])
 
     def __len__(self):
-        return 5
+        return 6
 
     def __repr__(self):
-        assert self.title and self.agency and self.cluster is not None and self.topic is not None and self.date is not None
-        return "{}\t{}\t{}\t{}\n".format(self.title, self.topic, self.agency, self.cluster, self.date)
+        return "{}\t{}\t{}\t{}\t{}\t{}\n".format(self.url, self.title, self.topic, self.agency, self.cluster, self.date)
 
 
 def calc_distances(vectors, metadata,
@@ -81,12 +81,36 @@ def calc_distances(vectors, metadata,
     return distances
 
 
-def fetch_data(annotations, field, encode_date=False, save_entities=False):
-    def encode_circular_feature(current_value, max_value):
-        sin = np.sin(2*np.pi*current_value/max_value)
-        cos = np.cos(2*np.pi*current_value/max_value)
-        return sin, cos
+def encode_circular_feature(current_value, max_value):
+    sin = np.sin(2*np.pi*current_value/max_value)
+    cos = np.cos(2*np.pi*current_value/max_value)
+    return sin, cos
 
+
+def collect_entities(spans, text, stemmer):
+    loc = []
+    per = []
+    for span in spans:
+        span_text = text[span.begin:span.end]
+        span_text = [stemmer.stem(token.text) for token in tokenize(span_text)]
+        if span.tag == EntitySpanPb.Tag.Value("LOC"):
+            loc.extend(span_text)
+        elif span.tag == EntitySpanPb.Tag.Value("PER"):
+            per.extend(span_text)
+    return loc, per
+
+
+def choose_best_entities(entities, bans):
+    best = set()
+    entities = Counter(entities)
+    max_count = entities.most_common(1)[0][1] if entities else 0
+    for entity, count in entities.items():
+        if max_count == count and entity not in bans:
+            best.add(entity)
+    return best
+
+
+def fetch_data(annotations, field, encode_date=False, save_entities=False):
     vectors = []
     metadata = []
     stemmer = None
@@ -112,6 +136,7 @@ def fetch_data(annotations, field, encode_date=False, save_entities=False):
         vectors.append(vector)
 
         meta = SampleMetadata()
+        meta.url = document.url
         meta.topic = document.topics.strip().replace("\n", "") if annot.document.topics else "None"
         meta.agency = document.agency.host.strip().replace("\n", "")
         meta.title = document.title.replace("\n", "").strip()
@@ -120,30 +145,12 @@ def fetch_data(annotations, field, encode_date=False, save_entities=False):
         if save_entities:
             title_spans = annot.get_info().title_dp_ner
             text_spans = annot.get_info().text_dp_ner
-            loc = list()
-            per = list()
-            def normalize(text):
-                return [stemmer.stem(token.text) for token in tokenize(text)]
-
-            def collect_entities(spans, text):
-                for span in spans:
-                    span_text = normalize(text[span.begin:span.end])
-                    if span.tag == EntitySpanPb.Tag.Value("LOC"):
-                        loc.extend(span_text)
-                    elif span.tag == EntitySpanPb.Tag.Value("PER"):
-                        per.extend(span_text)
-            collect_entities(title_spans, document.title)
-            collect_entities(text_spans, document.text)
-            def choose_best(entities, bans):
-                best = set()
-                entities = Counter(entities)
-                max_count = entities.most_common(1)[0][1] if entities else 0
-                for entity, count in entities.items():
-                    if max_count == count and entity not in bans:
-                        best.add(entity)
-                return best
-            meta.loc = choose_best(loc, {"москв", "росс"})
-            meta.per = choose_best(per, set())
+            loc, per = collect_entities(title_spans, document.title, stemmer)
+            text_loc, text_per = collect_entities(text_spans, document.text, stemmer)
+            loc += text_loc
+            per += text_per
+            meta.loc = choose_best_entities(loc, {"москв", "росс"})
+            meta.per = choose_best_entities(per, set())
 
         metadata.append(meta)
     vectors = np.array(vectors)
@@ -173,14 +180,8 @@ def save_to_tensorboard(vectors, metadata):
     writer.close()
 
 
-def print_clusters_info(metadata, n=5):
-    clusters = defaultdict(list)
-    noisy_count = 0
-    for meta in metadata:
-        if int(meta.cluster) == -1:
-            noisy_count += 1
-            continue
-        clusters[meta.cluster].append(meta)
+def print_clusters_info(clusters, n=5):
+    noisy_count = len(clusters.pop(-1)) if -1 in clusters else 0
     print("Noisy samples: {}".format(noisy_count))
 
     clusters = list(clusters.items())
@@ -205,7 +206,15 @@ def print_clusters_info(metadata, n=5):
         print()
 
 
-def cluster(db_engine, nrows, field, sort_by_date, start_date, end_date, clustering_type):
+def save_clusters(clusters, output_file_name):
+    if -1 in clusters:
+        clusters.pop(-1)
+    clusters = [[list(e) for e in cluster] for cluster in clusters.values()]
+    with open(output_file_name, "w") as w:
+        json.dump(clusters, w, ensure_ascii=False, indent=4)
+
+
+def cluster(db_engine, nrows, field, sort_by_date, start_date, end_date, clustering_type, output_file_name):
     engine = create_engine(db_engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -219,13 +228,18 @@ def cluster(db_engine, nrows, field, sort_by_date, start_date, end_date, cluster
     if sort_by_date:
         query = query.order_by(Document.date)
     annotations = list(query.limit(nrows)) if nrows else list(query.all())
+
     vectors, metadata = fetch_data(annotations, field)
     distances = calc_distances(vectors, metadata)
     labels = run_clustering(distances, clustering_type)
     for meta, label in zip(metadata, labels):
         meta.cluster = str(label)
     save_to_tensorboard(vectors, metadata)
-    print_clusters_info(metadata)
+    clusters = defaultdict(list)
+    for meta in metadata:
+        clusters[meta.cluster].append(meta)
+    print_clusters_info(clusters)
+    save_clusters(clusters, output_file_name)
 
 
 if __name__ == "__main__":
@@ -237,6 +251,7 @@ if __name__ == "__main__":
     parser.add_argument("--start-date", type=str, default=None)
     parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--clustering-type", type=str, choices=("agglomerative", "dbscan"), required=True)
+    parser.add_argument("--output-file-name", type=str, default="clustering.json")
 
     args = parser.parse_args()
     cluster(**vars(args))
