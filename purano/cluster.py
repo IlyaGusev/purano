@@ -23,13 +23,14 @@ from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
 
 
 class SampleMetadata:
-    def __init__(self):
-        self.url = None
-        self.title = None
-        self.topic = None
-        self.agency = None
+    def __init__(self, document):
+        self.url = document.url
+        self.topic = document.topics.strip().replace("\n", " ") if document.topics else "None"
+        self.agency = document.agency.host.strip().replace("\n", " ")
+        self.title = document.title.replace("\n", " ").strip()
+        self.date = document.date
+
         self.cluster = None
-        self.date = None
 
         self.loc = set()
         self.per = set()
@@ -135,12 +136,7 @@ def fetch_data(annotations, field, encode_date=False, save_entities=False):
             vector = np.append(vector, new_features)
         vectors.append(vector)
 
-        meta = SampleMetadata()
-        meta.url = document.url
-        meta.topic = document.topics.strip().replace("\n", "") if annot.document.topics else "None"
-        meta.agency = document.agency.host.strip().replace("\n", "")
-        meta.title = document.title.replace("\n", "").strip()
-        meta.date = document.date
+        meta = SampleMetadata(document)
 
         if save_entities:
             title_spans = annot.get_info().title_dp_ner
