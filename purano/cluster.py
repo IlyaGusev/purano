@@ -1,8 +1,10 @@
 import json
 import argparse
 from collections import defaultdict, Counter
-import numpy as np
 import io
+import hashlib
+
+import numpy as np
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from torch.utils.tensorboard import SummaryWriter
@@ -22,18 +24,48 @@ from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
 # TODO: extracting geo
 
 
-class SampleMetadata:
+class ClusteredDocument:
     def __init__(self, document):
-        self.url = document.url
-        self.topic = document.topics.strip().replace("\n", " ") if document.topics else "None"
-        self.agency = document.agency.host.strip().replace("\n", " ")
-        self.title = document.title.replace("\n", " ").strip()
-        self.date = document.date
+        self.document = document
 
         self.cluster = None
 
         self.loc = set()
         self.per = set()
+
+    @property
+    def url(self):
+        return self.document.url
+
+    @property
+    def date(self):
+        return self.document.date
+
+    @property
+    def topic(self):
+        return self.document.topics.strip().replace("\n", " ") if self.document.topics else "None"
+
+    @property
+    def agency(self):
+        return self.document.agency.host.strip().replace("\n", " ")
+
+    @property
+    def title(self):
+        return self.document.title.replace("\n", " ").strip()
+
+    @property
+    def text(self):
+        return self.document.text.replace("\n", " ").strip()
+
+    def to_dict(self):
+        return {
+            "url": self.url,
+            "title": self.title,
+            "text": self.text,
+            "date": str(self.date),
+            "docid": hashlib.md5((self.title + self.text).encode("utf-8")).hexdigest()[:6],
+            "clid": self.cluster
+        }
 
     @classmethod
     def get_header(self):
@@ -46,7 +78,7 @@ class SampleMetadata:
         return 6
 
     def __repr__(self):
-        return "{}\t{}\t{}\t{}\t{}\t{}\n".format(self.url, self.title, self.topic, self.agency, self.cluster, self.date)
+        return "{}\t{}\t{}\t{}\t{}\t{}\n".format(self.url, self.title, self.topic, self.agency, self.cluster, str(self.date))
 
 
 def calc_distances(vectors, metadata,
@@ -136,7 +168,7 @@ def fetch_data(annotations, field, encode_date=False, save_entities=False):
             vector = np.append(vector, new_features)
         vectors.append(vector)
 
-        meta = SampleMetadata(document)
+        meta = ClusteredDocument(document)
 
         if save_entities:
             title_spans = annot.get_info().title_dp_ner
@@ -172,7 +204,7 @@ def run_clustering(distances, clustering_type="agglomerative"):
 
 def save_to_tensorboard(vectors, metadata):
     writer = SummaryWriter()
-    writer.add_embedding(vectors, metadata, metadata_header=SampleMetadata.get_header())
+    writer.add_embedding(vectors, metadata, metadata_header=ClusteredDocument.get_header())
     writer.close()
 
 
@@ -205,7 +237,7 @@ def print_clusters_info(clusters, n=5):
 def save_clusters(clusters, output_file_name):
     if -1 in clusters:
         clusters.pop(-1)
-    clusters = [[list(e) for e in cluster] for cluster in clusters.values()]
+    clusters = [[e.to_dict() for e in cluster] for cluster in clusters.values()]
     with open(output_file_name, "w") as w:
         json.dump(clusters, w, ensure_ascii=False, indent=4)
 
