@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='info',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"m\n\nEntitySpan\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x04\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x04\x12!\n\x03tag\x18\x03 \x01(\x0e\x32\x14.info.EntitySpan.Tag\" \n\x03Tag\x12\x07\n\x03LOC\x10\x00\x12\x07\n\x03PER\x10\x01\x12\x07\n\x03ORG\x10\x02\"\xf0\x02\n\x04Info\x12\x1c\n\x14title_bert_embedding\x18\x01 \x03(\x01\x12\x1b\n\x13text_bert_embedding\x18\x02 \x03(\x01\x12$\n\x1ctitle_rvs_fasttext_embedding\x18\x03 \x03(\x01\x12#\n\x1btext_rvs_fasttext_embedding\x18\x04 \x03(\x01\x12 \n\x18title_rvs_elmo_embedding\x18\x05 \x03(\x01\x12\x1f\n\x17text_rvs_elmo_embedding\x18\x06 \x03(\x01\x12%\n\x1dtitle_text_rvs_elmo_embedding\x18\x07 \x03(\x01\x12)\n!title_text_rvs_fasttext_embedding\x18\x08 \x03(\x01\x12&\n\x0ctitle_dp_ner\x18\t \x03(\x0b\x32\x10.info.EntitySpan\x12%\n\x0btext_dp_ner\x18\n \x03(\x0b\x32\x10.info.EntitySpanb\x06proto3')
+  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"m\n\nEntitySpan\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x04\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x04\x12!\n\x03tag\x18\x03 \x01(\x0e\x32\x14.info.EntitySpan.Tag\" \n\x03Tag\x12\x07\n\x03LOC\x10\x00\x12\x07\n\x03PER\x10\x01\x12\x07\n\x03ORG\x10\x02\"\x81\x02\n\x04Info\x12 \n\x18title_fasttext_embedding\x18\x01 \x03(\x01\x12\x1f\n\x17text_fasttext_embedding\x18\x02 \x03(\x01\x12%\n\x1dtitle_text_fasttext_embedding\x18\x03 \x03(\x01\x12\"\n\x1atitle_xlmroberta_embedding\x18\x04 \x03(\x01\x12\x1c\n\x14title_elmo_embedding\x18\x05 \x03(\x01\x12&\n\x0ctitle_dp_ner\x18\x06 \x03(\x0b\x32\x10.info.EntitySpan\x12%\n\x0btext_dp_ner\x18\x07 \x03(\x0b\x32\x10.info.EntitySpanb\x06proto3')
 )
 
 
@@ -106,71 +106,50 @@ _INFO = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='title_bert_embedding', full_name='info.Info.title_bert_embedding', index=0,
+      name='title_fasttext_embedding', full_name='info.Info.title_fasttext_embedding', index=0,
       number=1, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='text_bert_embedding', full_name='info.Info.text_bert_embedding', index=1,
+      name='text_fasttext_embedding', full_name='info.Info.text_fasttext_embedding', index=1,
       number=2, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='title_rvs_fasttext_embedding', full_name='info.Info.title_rvs_fasttext_embedding', index=2,
+      name='title_text_fasttext_embedding', full_name='info.Info.title_text_fasttext_embedding', index=2,
       number=3, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='text_rvs_fasttext_embedding', full_name='info.Info.text_rvs_fasttext_embedding', index=3,
+      name='title_xlmroberta_embedding', full_name='info.Info.title_xlmroberta_embedding', index=3,
       number=4, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='title_rvs_elmo_embedding', full_name='info.Info.title_rvs_elmo_embedding', index=4,
+      name='title_elmo_embedding', full_name='info.Info.title_elmo_embedding', index=4,
       number=5, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='text_rvs_elmo_embedding', full_name='info.Info.text_rvs_elmo_embedding', index=5,
-      number=6, type=1, cpp_type=5, label=3,
+      name='title_dp_ner', full_name='info.Info.title_dp_ner', index=5,
+      number=6, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='title_text_rvs_elmo_embedding', full_name='info.Info.title_text_rvs_elmo_embedding', index=6,
-      number=7, type=1, cpp_type=5, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='title_text_rvs_fasttext_embedding', full_name='info.Info.title_text_rvs_fasttext_embedding', index=7,
-      number=8, type=1, cpp_type=5, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='title_dp_ner', full_name='info.Info.title_dp_ner', index=8,
-      number=9, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='text_dp_ner', full_name='info.Info.text_dp_ner', index=9,
-      number=10, type=11, cpp_type=10, label=3,
+      name='text_dp_ner', full_name='info.Info.text_dp_ner', index=6,
+      number=7, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -188,7 +167,7 @@ _INFO = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=132,
-  serialized_end=500,
+  serialized_end=389,
 )
 
 _ENTITYSPAN.fields_by_name['tag'].enum_type = _ENTITYSPAN_TAG

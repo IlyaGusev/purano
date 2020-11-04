@@ -82,9 +82,10 @@ class ClusteredDocument:
 
 
 def calc_distances(vectors, metadata,
-                   fix_agencies=True, agencies_penalty=5.0,
-                   fix_time=True, time_penalty=10.0,
+                   fix_agencies=False, agencies_penalty=5.0,
+                   fix_time=False, time_penalty=10.0,
                    fix_entities=False, entities_penalty=3.0):
+    print(vectors)
     distances = pairwise_distances(vectors, metric="cosine")
     if not fix_agencies and not fix_time and not fix_entities:
         return distances
@@ -189,7 +190,7 @@ def run_clustering(distances, clustering_type="agglomerative"):
     if clustering_type == "agglomerative":
         clustering = AgglomerativeClustering(
             affinity="precomputed",
-            distance_threshold=0.04,
+            distance_threshold=0.1,
             n_clusters=None,
             linkage="average")
     elif clustering_type == "dbscan":
@@ -252,17 +253,19 @@ def cluster(db_engine, nrows, field, sort_by_date, start_date, end_date, cluster
         query = query.filter(Document.date > start_date)
     if end_date:
         query = query.filter(Document.date < end_date)
-    query = query.join(Document.agency)
+    #query = query.join(Document.agency)
     if sort_by_date:
         query = query.order_by(Document.date)
     annotations = list(query.limit(nrows)) if nrows else list(query.all())
 
     vectors, metadata = fetch_data(annotations, field)
     distances = calc_distances(vectors, metadata)
+    print(distances)
     labels = run_clustering(distances, clustering_type)
     for meta, label in zip(metadata, labels):
         meta.cluster = str(label)
-    save_to_tensorboard(vectors, metadata)
+    if False:
+        save_to_tensorboard(vectors, metadata)
     clusters = defaultdict(list)
     for meta in metadata:
         clusters[meta.cluster].append(meta)
