@@ -23,6 +23,7 @@ flask >= 1.1.1
 nltk >= 3.2.5
 gensim == 3.8.1
 allennlp >= 0.9.0
+fasttext >= 0.9.1
 
 # Packages for visualizations.
 jupyter >= 1.0.0
