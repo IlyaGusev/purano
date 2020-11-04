@@ -1,5 +1,6 @@
 import argparse
 import os
+import json
 from collections import namedtuple
 from urllib.parse import urlsplit
 from datetime import datetime
@@ -11,16 +12,6 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from purano.models import Document, Base, Agency
-
-
-def parse_links(element):
-    links = []
-    for elem in element:
-        if elem.tag == "a" and elem.get("href"):
-            links.append(elem.get("href"))
-            continue
-        links += parse_links(elem)
-    return links
 
 
 def parse_xml(file_name):
@@ -46,6 +37,16 @@ def parse_xml(file_name):
     body_element = root.find("body")
     article_element = body_element.find("article")
     text = ""
+
+    def parse_links(element):
+        links = []
+        for elem in element:
+            if elem.tag == "a" and elem.get("href"):
+                links.append(elem.get("href"))
+                continue
+            links += parse_links(elem)
+        return links
+
     links = []
     for p_element in article_element.iterfind("p"):
         text += " ".join(p_element.itertext()) + " "
@@ -65,7 +66,7 @@ def parse_xml(file_name):
     return doc
 
 
-def parse_dir(directory):
+def parse_dir_html(directory):
     documents_count = 0
     for r, d, f in os.walk(directory):
         for file_name in f:
@@ -82,30 +83,63 @@ def parse_dir(directory):
                 continue
 
 
-def parse_tg(db_engine, directory, ndocs, save_fields, lang_detect_model, news_detect_model):
+def process_document(document, lang_detect_model, news_detect_model):
+    text_sample = document["title"] + " " + document["text"][:200]
+    text_sample = text_sample.replace("\n", " ")
+    language_predictions = lang_detect_model.predict(text_sample, k=1)
+    language = language_predictions[0][0][9:]
+    probability = language_predictions[1][0]
+    if language != "ru" or probability < 0.7:
+        return None
+    news_predictions = news_detect_model.predict(text_sample, k=1)
+    is_news = news_predictions[0][0][9:] == "news"
+    probability = news_predictions[1][0]
+    if not is_news and probability > 0.5:
+        return None
+    return document
+
+
+def parse_dir_jsonl(directory):
+    for r, d, f in os.walk(directory):
+        for file_name in f:
+            if not file_name.endswith(".jsonl"):
+                continue
+            fname = os.path.join(r, file_name)
+            with open(fname, "r") as f:
+                for line in f:
+                    record = json.loads(line)
+                    assert "title" in record
+                    assert "text" in record
+                    assert "url" in record
+                    timestamp = record.get("timestamp") - 3*3600
+                    record["date"] = str(datetime.fromtimestamp(timestamp))
+                    yield record
+
+
+def parse_tg(db_engine, inputs, ndocs, save_fields, lang_detect_model, news_detect_model, fmt):
+    save_fields = save_fields.split(",")
     engine = create_engine(db_engine)
     Base.metadata.create_all(engine, Base.metadata.tables.values(),checkfirst=True)
 
     documents = {}
-    save_fields = save_fields.split(",")
-    lang_detect_model = fasttext.load_model(lang_detect_model)
-    news_detect_model = fasttext.load_model(news_detect_model)
-    for i, document in enumerate(parse_dir(directory)):
-        if ndocs and i >= ndocs:
-            break
-        text_sample = document["title"] + " " + document["text"][:200]
-        text_sample = text_sample.replace("\n", " ")
-        language_predictions = lang_detect_model.predict(text_sample, k=1)
-        language = language_predictions[0][0][9:]
-        probability = language_predictions[1][0]
-        if language != "ru" or probability < 0.7:
-            continue
-        news_predictions = news_detect_model.predict(text_sample, k=1)
-        is_news = news_predictions[0][0][9:] == "news"
-        probability = news_predictions[1][0]
-        if not is_news and probability > 0.5:
-            continue
-        documents[document["url"]] = document
+    if fmt == "html":
+        assert lang_detect_model and os.path.exists(lang_detect_model)
+        assert news_detect_model and os.path.exists(news_detect_model)
+        lang_detect_model = fasttext.load_model(lang_detect_model)
+        news_detect_model = fasttext.load_model(news_detect_model)
+        for i, document in enumerate(parse_dir_html(inputs)):
+            if ndocs and i >= ndocs:
+                break
+            document = process_document(document, lang_detect_model, news_detect_model)
+            if document:
+                documents[document["url"]] = document
+    elif fmt == "jsonl":
+        for i, document in enumerate(parse_dir_jsonl(inputs)):
+            if ndocs and i >= ndocs:
+                break
+            documents[document.get("url")] = document
+    else:
+        assert False
     documents = documents.values()
     print("{} will be saved".format(len(documents)))
 
@@ -140,10 +174,11 @@ def parse_tg(db_engine, directory, ndocs, save_fields, lang_detect_model, news_d
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--db-engine", type=str, default="sqlite:///news.db")
-    parser.add_argument("--directory", type=str, required=True)
+    parser.add_argument("--inputs", type=str, required=True)
     parser.add_argument("--ndocs", type=int, default=None)
-    parser.add_argument("--save-fields", type=str, default="url,title,text,authors,date,edition,agency_id")
-    parser.add_argument("--lang-detect-model", type=str, default="models/lang_detect.ftz")
-    parser.add_argument("--news-detect-model", type=str, default="models/ru_news_detect.ftz")
+    parser.add_argument("--save-fields", type=str, default="url,title,text,date")
+    parser.add_argument("--lang-detect-model", type=str, default=None)
+    parser.add_argument("--news-detect-model", type=str, default=None)
+    parser.add_argument("--fmt", type=str, choices=("html", "jsonl"), default="jsonl")
     args = parser.parse_args()
     parse_tg(**vars(args))

@@ -77,6 +77,7 @@ class Annotator:
             step_time[step_name] = time.time() - start_time
             start_time = time.time()
             for index, info in enumerate(batch):
+                del getattr(info, output_field)[:]
                 getattr(info, output_field).extend(outputs[index])
 
         start_time = time.time()

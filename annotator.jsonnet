@@ -22,29 +22,28 @@
             "options_file": "./models/ruwikiruscorpora_tokens_elmo_1024_2019/options.json",
             "weight_file": "./models/ruwikiruscorpora_tokens_elmo_1024_2019/model.hdf5",
             "cuda_device": 0
+        },
+        "ner_client": {
+            "type": "ner_client",
+            "port": 8889,
+            "ip": "0.0.0.0"
         }
-        #"ner_client": {
-        #    "type": "ner_client",
-        #    "port": 8889,
-        #    "ip": "0.0.0.0",
-        #    "max_char_count": 1000
-        #}
     },
     #"bert_title": {
     #    "processor": "deeppavlov_bert",
     #    "input_fields": ["title"],
     #    "output_field": "title_bert_embedding"
     #},
-    #"dp_ner_title": {
-    #    "processor": "ner_client",
-    #    "input_fields": ["title"],
-    #    "output_field": "title_dp_ner"
-    #},
-    #"dp_ner_text": {
-    #    "processor": "ner_client",
-    #    "input_fields": ["text"],
-    #    "output_field": "text_dp_ner"
-    #},
+    "dp_ner_title": {
+        "processor": "ner_client",
+        "input_fields": ["title"],
+        "output_field": "title_dp_ner"
+    },
+    "dp_ner_text": {
+        "processor": "ner_client",
+        "input_fields": ["text"],
+        "output_field": "text_dp_ner"
+    },
     "rvs_fasttext_title": {
         "processor": "rvs_fasttext",
         "agg_type": "mean||max",
