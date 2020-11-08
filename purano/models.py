@@ -6,28 +6,22 @@ from purano.proto.info_pb2 import Info as InfoPb
 Base = declarative_base()
 
 
-class Agency(Base):
-    __tablename__ = "agency"
-
-    id = Column(Integer, primary_key=True)
-    host = Column(String, unique=True, nullable=False)
-    name = Column(String, nullable=True)
-
-
 class Document(Base):
     __tablename__ = "document"
 
     id = Column(Integer, primary_key=True)
     url = Column(String, unique=True, nullable=False)
+    host = Column(String, nullable=False)
     date = Column(DateTime, nullable=False)
-    edition = Column(String, nullable=True)
+    language = Column(Text)
+    category = Column(Text)
     text = Column(Text)
     title = Column(Text)
+    patched_text = Column(Text)
+    patched_title = Column(Text)
     topics = Column(Text, nullable=True)
     authors = Column(Text, nullable=True)
     info = relationship("Info", uselist=False, back_populates="document")
-    agency_id = Column(Integer, ForeignKey("agency.id"))
-    agency = relationship("Agency", backref="documents")
 
 
 class Info(Base):

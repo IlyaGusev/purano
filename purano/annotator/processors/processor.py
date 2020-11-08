@@ -1,6 +1,6 @@
 from typing import List
 
-from purano.registrable import Registrable
+from purano.util.registrable import Registrable
 from purano.proto.info_pb2 import Info as InfoPb
 from purano.models import Document
 

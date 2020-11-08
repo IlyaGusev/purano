@@ -10,6 +10,5 @@ https://data-static.usercontent.dev/DataClusteringSample2703.tar.gz
 https://data-static.usercontent.dev/DataClusteringSample0410.tar.gz
 https://data-static.usercontent.dev/DataClusteringSample1117.tar.gz
 https://data-static.usercontent.dev/DataClusteringDataset0525.tar.gz
-https://data-static.usercontent.dev/DataClusteringDataset0525.tar.gz
 https://data-static.usercontent.dev/DataClusteringDataset0527.tar.gz
 https://data-static.usercontent.dev/DataClusteringDataset0529.tar.gz

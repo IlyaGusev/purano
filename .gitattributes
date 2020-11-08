@@ -1,2 +1,0 @@
-models/lang_detect.ftz filter=lfs diff=lfs merge=lfs -text
-models/ru_news_detect.ftz filter=lfs diff=lfs merge=lfs -text

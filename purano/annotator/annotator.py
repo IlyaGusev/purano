@@ -5,11 +5,6 @@ from typing import List, Iterable
 
 import _jsonnet
 import numpy as np
-from gensim.models import KeyedVectors
-from gensim.models.keyedvectors import FastTextKeyedVectors
-from allennlp.commands.elmo import ElmoEmbedder
-from razdel import tokenize
-from bert_serving.client import BertClient
 
 from purano.models import Document, Info
 from purano.proto.info_pb2 import Info as InfoPb, EntitySpan as EntitySpanPb
