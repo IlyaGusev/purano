@@ -190,7 +190,7 @@ def run_clustering(distances, clustering_type="agglomerative"):
     if clustering_type == "agglomerative":
         clustering = AgglomerativeClustering(
             affinity="precomputed",
-            distance_threshold=0.1,
+            distance_threshold=0.15,
             n_clusters=None,
             linkage="average")
     elif clustering_type == "dbscan":
