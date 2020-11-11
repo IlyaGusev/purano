@@ -133,7 +133,7 @@ if __name__ == "__main__":
     parser.add_argument("--ndocs", type=int, default=None)
     parser.add_argument("--save-fields", type=str,
                         default="url,host,title,text,date,patched_title,patched_text,category")
-    parser.add_argument("--cleaner-config", type=str, default="cleaner.jsonnet")
+    parser.add_argument("--cleaner-config", type=str, default="configs/cleaner.jsonnet")
     parser.add_argument("--start-date", type=str, default=None)
     parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--fmt", type=str, choices=("html", "jsonl", "csv"), required=True)

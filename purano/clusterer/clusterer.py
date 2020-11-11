@@ -179,13 +179,11 @@ class Clusterer:
         writer.add_embedding(self.vectors, metadata, metadata_header=ClusteredDocument.get_header())
         writer.close()
 
-    def save_clusters(self, output_file_name):
-        # NOT WORKING
+    def save(self, output_file_name):
         clusters = []
-        for label, cluster in clusters.items():
+        for label, cluster in self.clusters.items():
             if label == -1:
                 continue
-            clusters.append([e.to_dict() for e in cluster])
+            clusters.append({"articles": [self.num2doc[self.id2num[doc_id]].url for doc_id in cluster]})
         with open(output_file_name, "w") as w:
             json.dump(clusters, w, ensure_ascii=False, indent=4)
-

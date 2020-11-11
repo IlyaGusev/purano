@@ -29,6 +29,7 @@ def cluster(
     )
     clusterer.cluster()
     clusterer.print_clusters()
+    clusterer.save(output_file_name)
     #clusters = defaultdict(list)
     #for meta in metadata:
     #    clusters[meta.cluster].append(meta)
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("--start-date", type=str, default=None)
     parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--config", type=str, required=True)
-    parser.add_argument("--output-file-name", type=str, default="clustering.json")
+    parser.add_argument("--output-file-name", type=str, default="threads.json")
 
     args = parser.parse_args()
     profiler = Profiler()
