@@ -3,7 +3,7 @@ import time
 import copy
 from typing import List, Iterable
 
-import _jsonnet
+from _jsonnet import evaluate_file as jsonnet_evaluate_file
 import numpy as np
 
 from purano.models import Document, Info
@@ -14,7 +14,7 @@ from purano.annotator.processors import Processor
 class Annotator:
     def __init__(self, db_session, config_path: str):
         self.db_session = db_session
-        self.config = json.loads(_jsonnet.evaluate_file(config_path))
+        self.config = json.loads(jsonnet_evaluate_file(config_path))
         self.processors = dict()
         for key, item in self.config["processors"].items():
             item_type = item.pop("type")
