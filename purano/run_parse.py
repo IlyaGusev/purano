@@ -12,8 +12,8 @@ from pyonmttok import Tokenizer
 
 from purano.models import Document, Base
 from purano.readers.tg_html import parse_tg_html_dir
-from purano.readers.tg_jsonl import parse_tg_jsonl_dir
-from purano.readers.csv import parse_csv_dir
+from purano.readers.tg_jsonl import parse_tg_jsonl_dir, parse_tg_jsonl
+from purano.readers.csv import parse_csv_dir, parse_csv
 
 
 FASTTEXT_LABEL_OFFSET = len("__label__")
@@ -70,9 +70,9 @@ class DocumentsCleaner:
 
 
 def run_parse(
-    db_engine,
     inputs,
     fmt,
+    output_file,
     ndocs,
     save_fields,
     start_date,
@@ -83,10 +83,14 @@ def run_parse(
     parser = None
     if fmt == "html":
         parser = parse_tg_html_dir
-    elif fmt == "jsonl":
+    elif fmt == "jsonl" and os.path.isdir(inputs):
         parser =  parse_tg_jsonl_dir
-    elif fmt == "csv":
+    elif fmt == "jsonl" and os.path.isfile(inputs):
+        parser =  parse_tg_jsonl
+    elif fmt == "csv" and os.path.isdir(inputs):
         parser = parse_csv_dir
+    elif fmt == "csv" and os.path.isfile(inputs):
+        parser = parse_csv
     else:
         assert False, "Parser for format {} is not set".format(fmt)
 
@@ -102,7 +106,6 @@ def run_parse(
             if len(documents) % 10000 == 0:
                 print("{} documents processed".format(len(documents)))
     documents = documents.values()
-    print("{} will be saved".format(len(documents)))
 
     # Filter, undup, sort
     df = DataFrame(documents)
@@ -115,22 +118,24 @@ def run_parse(
     if end_date:
         df = df[df["date"] < end_date]
     df.sort_values("date", inplace=True)
+    print("{} will be saved".format(len(df)))
 
     # Print dataset info
     print(df.info())
     print(df.head(5))
 
     # Save to database
+    db_engine = "sqlite:///{}".format(output_file)
     engine = create_engine(db_engine)
-    Base.metadata.create_all(engine, Base.metadata.tables.values(),checkfirst=True)
+    Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)
     df.to_sql(Document.__tablename__, engine.raw_connection(), if_exists='append', index=False)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--db-engine", type=str, default="sqlite:///news.db")
     parser.add_argument("--inputs", type=str, required=True)
     parser.add_argument("--ndocs", type=int, default=None)
+    parser.add_argument("--output-file", type=str, default="output/parsed.db")
     parser.add_argument("--save-fields", type=str,
                         default="url,host,title,text,date,patched_title,patched_text,category")
     parser.add_argument("--cleaner-config", type=str, default="configs/cleaner.jsonnet")

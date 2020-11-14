@@ -8,14 +8,15 @@ from purano.clusterer.clusterer import Clusterer
 
 
 def cluster(
-    db_engine,
-    nrows,
-    sort_by_date,
-    start_date,
-    end_date,
-    config,
-    output_file_name
+    input_file: str,
+    nrows: int,
+    sort_by_date: bool,
+    start_date: str,
+    end_date: str,
+    config: str,
+    output_file: str
 ):
+    db_engine = "sqlite:///{}".format(input_file)
     engine = create_engine(db_engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -29,23 +30,17 @@ def cluster(
     )
     clusterer.cluster()
     clusterer.print_clusters()
-    clusterer.save(output_file_name)
-    #clusters = defaultdict(list)
-    #for meta in metadata:
-    #    clusters[meta.cluster].append(meta)
-    #print_clusters_info(clusters)
-    #save_clusters(clusters, output_file_name)
-
+    clusterer.save(output_file)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--db-engine", type=str, default="sqlite:///news.db")
+    parser.add_argument("--input-file", type=str, default="output/annotated.db")
     parser.add_argument("--nrows", type=int, default=None)
     parser.add_argument("--sort-by-date", default=False,  action='store_true')
     parser.add_argument("--start-date", type=str, default=None)
     parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--config", type=str, required=True)
-    parser.add_argument("--output-file-name", type=str, default="threads.json")
+    parser.add_argument("--output-file", type=str, default="output/clusters.json")
 
     args = parser.parse_args()
     profiler = Profiler()

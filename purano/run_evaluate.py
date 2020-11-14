@@ -16,7 +16,14 @@ def read_markup(file_name):
             yield record
 
 
-def calc_threads_metrics(clustering_markup, original_jsonl, threads_json, errors_tsv, output_json):
+def calc_threads_metrics(
+    clustering_markup,
+    original_jsonl,
+    threads_json,
+    errors_tsv,
+    output_json,
+    include_errors
+):
     markup = defaultdict(dict)
     for record in read_markup(clustering_markup):
         first_url = record["INPUT:first_url"]
@@ -75,10 +82,10 @@ def calc_threads_metrics(clustering_markup, original_jsonl, threads_json, errors
     metrics["categories"] = [(0, metrics.pop("0")), (1, metrics.pop("1"))]
 
     with open(output_json, "w") as w:
-        json.dump({
-            "threads_metrics": metrics,
-            "threads_errors": errors
-        }, w, ensure_ascii=False, indent=4)
+        output = {"threads_metrics": metrics}
+        if include_errors:
+            output["threads_errors"] = errors
+        json.dump(output, w, ensure_ascii=False, indent=4)
 
     if errors_tsv:
         with open(errors_tsv, "w") as w:
@@ -94,6 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--original-jsonl", type=str, required=True)
     parser.add_argument("--threads-json", type=str, required=True)
     parser.add_argument("--output-json", type=str, required=True)
+    parser.add_argument("--include-errors", default=False,  action='store_true')
     parser.add_argument("--errors-tsv", type=str, default=None)
     args = parser.parse_args()
     calc_threads_metrics(**vars(args))
