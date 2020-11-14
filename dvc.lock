@@ -40,7 +40,7 @@ clustering_train:
   params:
     configs/clusterer.jsonnet:
       clustering_params.affinity: precomputed
-      clustering_params.distance_threshold: 0.08
+      clustering_params.distance_threshold: 0.11
       clustering_params.linkage: average
       clustering_params.n_clusters:
       clustering_type: agglomerative
@@ -50,7 +50,7 @@ clustering_train:
       hosts_penalty: 5.0
   outs:
   - path: output/clusters.json
-    md5: 94117beea6bf41722c8e38c584fb47a8
+    md5: e7a50055ea3bec289ded98ae0d08491e
 evaluate_train:
   cmd: python3 -m purano.run_evaluate --clustering-markup data/markup/ru_clustering_0525.tsv
     --original-json data/documents/ru_tg_0525.jsonl --threads-json output/clusters.json
@@ -61,9 +61,9 @@ evaluate_train:
   - path: data/markup/ru_clustering_0525.tsv
     md5: 87705bb85e7e4a96662a6af85350f063
   - path: output/clusters.json
-    md5: 94117beea6bf41722c8e38c584fb47a8
+    md5: e7a50055ea3bec289ded98ae0d08491e
   - path: purano/run_evaluate.py
     md5: 198bfae25ca09a842b71213a306db298
   outs:
   - path: output/metrics.json
-    md5: d2d7f7b1128a1194dfe53db71b4f64f7
+    md5: 45960477c08717d9c5c92012c6b8ecdf

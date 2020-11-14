@@ -3,7 +3,7 @@
     "clustering_params": {
         "affinity": "precomputed",
         "linkage": "average",
-        "distance_threshold": 0.08,
+        "distance_threshold": 0.11,
         "n_clusters": null
     },
     "embedding_key": "title_fasttext_embedding",
