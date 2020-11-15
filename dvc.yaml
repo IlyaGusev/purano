@@ -36,7 +36,9 @@ stages:
       - clustering_params.linkage
       - clustering_params.n_clusters
       - clustering_type
-      - embedding_key
+      - embeddings.aggregation
+      - embeddings.keys
+      - embeddings.weights
       - entities_key
       - fix_hosts
       - hosts_penalty

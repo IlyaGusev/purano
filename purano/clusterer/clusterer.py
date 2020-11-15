@@ -40,13 +40,34 @@ class Clusterer:
         self.labels = dict()
         self.clusters = defaultdict(list)
 
+    def build_final_embedding(self, info, embeddings_config):
+        aggregation = embeddings_config["aggregation"]
+        keys = embeddings_config["keys"]
+        weights = embeddings_config["weights"]
+        assert len(keys) == len(weights)
+        vectors = []
+        for weight, key in zip(weights, keys):
+            vector = np.array(info[key])
+            vector *= weight
+            vectors.append(vector)
+        if aggregation == "concat":
+            return np.concatenate(vectors, axis=0)
+        assert len({len(v) for v in vectors}) == 1, "Embeddings have different dimensions"
+        vectors = np.array(vectors)
+        if aggregation == "max":
+            return np.max(vectors, axis=1)
+        if aggregation == "min":
+            return np.min(vectors, axis=1)
+        assert aggregation == "sum", "Unknown aggregation: {}".format(aggregation)
+        return np.sum(vectors, axis=1)
+
     def fetch_embeddings(self,
         start_date: Optional[str]=None,
         end_date: Optional[str]=None,
         sort_by_date: Optional[bool]=False,
         nrows: Optional[int]=None
     ):
-        embedding_key = self.config.pop("embedding_key")
+        embeddings_config = self.config.pop("embeddings")
         entities_key = self.config.pop("entities_key", None)
 
         query = self.db_session.query(Document)
@@ -63,7 +84,7 @@ class Clusterer:
         for doc_num, document in enumerate(documents):
             if doc_num % 100 == 0:
                 print("Fetched {} documents".format(doc_num))
-            vector = np.array(document.info[embedding_key])
+            vector = self.build_final_embedding(document.info, embeddings_config)
 
             entities_pb = document.info[entities_key]
             entities = self.collect_entities(entities_pb, document.title) if entities_key else dict()
