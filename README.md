@@ -20,3 +20,5 @@ $ dvc pull
 $ dvc repro
 $ cat output/metrics.json
 ```
+
+WARNING: The clustering requires more than 8GB of RAM, as it stores all N^2 pairwise distances
