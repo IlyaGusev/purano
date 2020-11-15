@@ -1,4 +1,6 @@
 [core]
-    remote = news-clustering
+    remote = news-clustering-http
 ['remote "news-clustering"']
     url = s3://news-clustering
+['remote "news-clustering-http"']
+    url = https://news-clustering.s3.amazonaws.com/
