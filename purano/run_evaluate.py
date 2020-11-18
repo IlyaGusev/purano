@@ -79,7 +79,6 @@ def calc_threads_metrics(
     for error in errors:
         print(error["target"], error["prediction"], " ||| ", error["first_title"], " ||| ", error["second_title"])
     metrics = classification_report(targets, predictions, output_dict=True)
-    metrics["categories"] = [(0, metrics.pop("0")), (1, metrics.pop("1"))]
 
     with open(output_json, "w") as w:
         output = {"threads_metrics": metrics}

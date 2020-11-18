@@ -9,6 +9,7 @@ import torch
 from purano.annotator.processors import Processor
 from purano.models import Document
 from purano.proto.info_pb2 import Info as InfoPb
+from purano.util import tokenize
 
 @Processor.register("fasttext")
 class FasttextProcessor(Processor):
@@ -28,10 +29,12 @@ class FasttextProcessor(Processor):
         max_tokens_count: int,
         agg_type: str,
         norm_word_vectors: bool=True,
-        use_preprocessing: bool=True
+        use_preprocessing: bool=True,
+        **kwargs
     ):
         assert agg_type in ("mean", "max", "mean||max||min", "linear")
         assert agg_type != "linear" or self.torch_model
+        assert len(kwargs) == 0, "{} are not used".format(kwargs)
 
         word_embeddings = self.calc_word_embeddings(
             docs, input_fields, max_tokens_count,
@@ -62,18 +65,13 @@ class FasttextProcessor(Processor):
         norm_word_vectors: bool,
         use_preprocessing: bool
     ):
-        def preprocess(text):
-            text = str(text).strip().replace("\n", " ").replace("\xa0", " ").lower()
-            tokens, _ = self.tokenizer.tokenize(text)
-            return tokens
-
         batch_size = len(docs)
         vector_dim = self.vector_model.get_dimension()
         word_embeddings = np.zeros((batch_size, max_tokens_count, vector_dim), dtype=np.float32)
         real_max_tokens_count = 0
         for doc_num, doc in enumerate(docs):
             sample = " ".join([getattr(doc, input_field) for input_field in input_fields])
-            tokens = preprocess(sample) if use_preprocessing else sample.split(" ")
+            tokens = tokenize(sample) if use_preprocessing else sample.split(" ")
             tokens = tokens[:max_tokens_count]
             real_max_tokens_count = max(real_max_tokens_count, len(tokens))
             for token_num, token in enumerate(tokens):

@@ -8,6 +8,7 @@ from _jsonnet import evaluate_file as jsonnet_evaluate_file
 from nltk.stem.snowball import SnowballStemmer
 from razdel import tokenize
 from scipy.special import expit
+from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.cluster import AgglomerativeClustering, DBSCAN
 from sklearn.metrics import pairwise_distances
 from torch.utils.tensorboard import SummaryWriter
@@ -16,7 +17,6 @@ from purano.models import Document
 from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
 
 # TODO: agency2vec
-# TODO: clustering markup
 # TODO: extracting geo
 
 
@@ -33,9 +33,12 @@ class Clusterer:
 
         self.num2doc = list()
         self.num2entities = list()
+        self.num2keywords = list()
+        self.num2host = list()
+        self.num2timestamp = list()
 
         self.id2num = dict()
-        self.host2nums = defaultdict(list)
+        self.keyword2nums = defaultdict(list)
 
         self.labels = dict()
         self.clusters = defaultdict(list)
@@ -61,77 +64,79 @@ class Clusterer:
         assert aggregation == "sum", "Unknown aggregation: {}".format(aggregation)
         return np.sum(vectors, axis=1)
 
-    def fetch_embeddings(self,
+    def fetch_info(self,
         start_date: Optional[str]=None,
         end_date: Optional[str]=None,
         sort_by_date: Optional[bool]=False,
         nrows: Optional[int]=None
     ):
+        print("Fetching documents from database...")
         embeddings_config = self.config.pop("embeddings")
         entities_key = self.config.pop("entities_key", None)
+        keywords_key = self.config.pop("keywords_key", None)
 
         query = self.db_session.query(Document)
-        query = query.join(Document.info)
         if start_date:
             query = query.filter(Document.date > start_date)
         if end_date:
             query = query.filter(Document.date < end_date)
         if sort_by_date:
             query = query.order_by(Document.date)
+        query = query.join(Document.info)
         documents = list(query.limit(nrows)) if nrows else list(query.all())
 
         vectors = []
         for doc_num, document in enumerate(documents):
-            if doc_num % 100 == 0:
+            if doc_num % 1000 == 0:
                 print("Fetched {} documents".format(doc_num))
-            vector = self.build_final_embedding(document.info, embeddings_config)
+            info = document.info
+            vector = self.build_final_embedding(info, embeddings_config)
 
-            entities_pb = document.info[entities_key]
-            entities = self.collect_entities(entities_pb, document.title) if entities_key else dict()
+            if entities_key:
+                entities_pb = info[entities_key]
+                entities = self.collect_entities(entities_pb, document.title)
+                self.num2entities.append(entities)
 
-            encoded_date = self.encode_date(document.date)
+            if keywords_key:
+                keywords_pb = info[keywords_key]
+                keywords = list(keywords_pb)
+                self.num2keywords.append(keywords)
+                for keyword in keywords:
+                    self.keyword2nums[keyword].append(doc_num)
 
-            self.db_session.expunge(document)
             del document.info
 
             vectors.append(vector)
-            self.num2doc.append(document)
-            self.num2entities.append(entities)
             self.id2num[document.id] = doc_num
-            self.host2nums[document.host].append(doc_num)
+            self.num2doc.append(document)
+            self.num2host.append(document.host)
+            self.num2timestamp.append(document.date.timestamp())
+
         self.vectors = np.array(vectors)
 
     def cluster(self):
-        distances = pairwise_distances(self.vectors, metric="cosine")
         fix_hosts = self.config.pop("fix_hosts", False)
         fix_time = self.config.pop("fix_time", False)
         hosts_penalty = self.config.pop("hosts_penalty", 1.0)
-        time_penalty = self.config.pop("time_penalty", 1.0)
-        max_distance = distances.max()
 
-        if fix_hosts:
-            penalty = hosts_penalty
-            for host, nums in self.host2nums.items():
-                for i, j in itertools.product(nums, repeat=2):
-                    if i == j:
-                        continue
-                    distances[i, j] = min(max_distance, distances[i, j] * penalty)
-
-        if fix_time:
-            def calc_time_penalty(doc1, doc2):
-                time_diff = abs((doc1.date - doc2.date).total_seconds())
-                x = (time_diff / 3600) - 12
-                return 1.0 + expit(x) * (time_penalty - 1.0)
-
-            for i in range(len(distances)):
-                if i % 100 == 0:
-                    print(i)
-                for j in range(len(distances)):
-                    if i == j:
-                        continue
-                    penalty = calc_penalty(self.num2doc[i], self.num2doc[j])
-                    distances[i, j] = min(max_distance, distances[i, j] * penalty)
-
+        time_penalty_modifier = self.config.pop("time_penalty", 1.0)
+        print("Calculating distances matrix...")
+        max_distance = 1.0
+        distances = np.full((len(self.num2doc), len(self.num2doc)), max_distance, dtype=np.float32)
+        for i, (keyword, doc_nums) in enumerate(self.keyword2nums.items()):
+            vectors = self.vectors[doc_nums]
+            batch_distances = pairwise_distances(vectors, metric="cosine", n_jobs=1, force_all_finite=False)
+            for (l1, g1), (l2, g2) in itertools.product(enumerate(doc_nums), repeat=2):
+                distances[g1, g2] = batch_distances[l1, l2]
+                if fix_hosts and self.num2host[g1] == self.num2host[g2]:
+                    distances[g1, g2] = min(max_distance, distances[g1, g2] * hosts_penalty)
+                if fix_time and g1 != g2:
+                    time_diff = abs(self.num2timestamp[g1] - self.num2timestamp[g2])
+                    hours_shifted = (time_diff / 3600) - 12
+                    time_penalty = 1.0 + expit(hours_shifted) * (time_penalty_modifier - 1.0)
+                    distances[g1, g2] = min(max_distance, distances[g1, g2] * time_penalty)
+ 
+        print("Running clustering algorithm...")
         clustering_type = self.config.pop("clustering_type")
         clustering_params = self.config.pop("clustering_params")
         clustering = self.clusterings[clustering_type](**clustering_params)
@@ -176,23 +181,6 @@ class Clusterer:
             elif span.tag == EntitySpanPb.Tag.Value("PER"):
                 per.extend(span_text)
         return {"loc": loc, "per": per}
-
-    @staticmethod
-    def encode_date(date):
-        def encode_circular_feature(current_value, max_value):
-            sin = np.sin(2*np.pi*current_value/max_value)
-            cos = np.cos(2*np.pi*current_value/max_value)
-            return sin, cos
-
-        midnight = date.replace(hour=0, minute=0, second=0, microsecond=0)
-        seconds_from_midnight = (date - midnight).seconds
-        sin_time, cos_time = encode_circular_feature(seconds_from_midnight, 24 * 60 * 60)
-
-        day_of_year = date.timetuple().tm_yday
-        days_in_year = date.replace(month=12, day=31).timetuple().tm_yday
-        sin_day, cos_day = encode_circular_feature(day_of_year, days_in_year)
-        new_features = (sin_time, cos_time, sin_day, cos_day)
-        return np.append(np.array(new_features[0]), new_features[1:])
 
     def save_to_tensorboard(self):
         # NOT WORKING

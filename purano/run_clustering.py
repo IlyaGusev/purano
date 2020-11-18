@@ -18,11 +18,11 @@ def cluster(
 ):
     db_engine = "sqlite:///{}".format(input_file)
     engine = create_engine(db_engine)
-    Session = sessionmaker(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False)
     session = Session()
 
     clusterer = Clusterer(session, config)
-    clusterer.fetch_embeddings(
+    clusterer.fetch_info(
         start_date,
         end_date,
         sort_by_date,
@@ -41,10 +41,15 @@ if __name__ == "__main__":
     parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--output-file", type=str, default="output/clusters.json")
+    parser.add_argument("--perfomance-log", type=str, default="clustering_performance.txt")
 
     args = parser.parse_args()
     profiler = Profiler()
     profiler.start()
-    cluster(**vars(args))
+    args = vars(args)
+    perfomance_log = args.pop("perfomance_log")
+    cluster(**args)
     profiler.stop()
-    print(profiler.output_text(unicode=True, color=True))
+
+    with open(perfomance_log, "w") as w:
+        w.write(profiler.output_text(unicode=True, color=True, show_all=True))

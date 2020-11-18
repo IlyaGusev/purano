@@ -22,4 +22,5 @@ message Info {
     repeated EntitySpan title_slovnet_ner = 6;
     repeated double title_linear_fasttext_embedding = 7;
     repeated double text_linear_fasttext_embedding = 8;
+    repeated string tfidf_keywords = 9;
 }

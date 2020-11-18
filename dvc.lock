@@ -21,26 +21,28 @@ annotate_train:
     --sort-by-date --output-file output/train_annotated.db --input-file output/train_parsed.db
   deps:
   - path: configs/annotator.jsonnet
-    md5: c5552d5f1efb86f8ff79af834d7a57ea
+    md5: 9a4f379505eb53f5a153d438f114db5c
   - path: output/train_parsed.db
     md5: 73806e15e4e41285075c3f5c4a6d8ef5
   - path: purano/run_annotate.py
     md5: 054645ecf679834a8cad348d1dae1ba6
   outs:
   - path: output/train_annotated.db
-    md5: 5311d4c162939abc5e3d382dd294864b
+    md5: ead1158192ea87e48d4a06dac9f76fe1
 clustering_train:
   cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
     --output-file output/clusters.json --input-file output/train_annotated.db
   deps:
   - path: output/train_annotated.db
-    md5: 5311d4c162939abc5e3d382dd294864b
+    md5: ead1158192ea87e48d4a06dac9f76fe1
+  - path: purano/clusterer/clusterer.py
+    md5: 08a93e9909a669bdf6df9b97ed9c3847
   - path: purano/run_clustering.py
-    md5: 505cc6c59ef9598b2e7cca2ad82af4b3
+    md5: 85ed83c3511d05ca464f42b56aa2bdd4
   params:
     configs/clusterer.jsonnet:
       clustering_params.affinity: precomputed
-      clustering_params.distance_threshold: 0.32
+      clustering_params.distance_threshold: 0.36
       clustering_params.linkage: average
       clustering_params.n_clusters:
       clustering_type: agglomerative
@@ -53,10 +55,12 @@ clustering_train:
       - 1.0
       entities_key: title_slovnet_ner
       fix_hosts: true
+      fix_time: false
       hosts_penalty: 5.0
+      time_penalty: 4.0
   outs:
   - path: output/clusters.json
-    md5: 6522e38b9af24ed93f6d6ea6742766b8
+    md5: afefe0e6a4fb6f798907ee63ced3b06d
 evaluate_train:
   cmd: python3 -m purano.run_evaluate --clustering-markup data/markup/ru_clustering_0525.tsv
     --original-json data/documents/ru_tg_0525.jsonl --threads-json output/clusters.json
@@ -67,9 +71,9 @@ evaluate_train:
   - path: data/markup/ru_clustering_0525.tsv
     md5: 87705bb85e7e4a96662a6af85350f063
   - path: output/clusters.json
-    md5: 6522e38b9af24ed93f6d6ea6742766b8
+    md5: afefe0e6a4fb6f798907ee63ced3b06d
   - path: purano/run_evaluate.py
-    md5: 198bfae25ca09a842b71213a306db298
+    md5: bd4fcd1b62016bcf41d55218806b4a91
   outs:
   - path: output/metrics.json
-    md5: e9d8fa54f282e5a3985b1e9c483ceb63
+    md5: 32170680c80eb4c98aa00043e6f9dbc5

@@ -29,6 +29,7 @@ stages:
     deps:
     - output/train_annotated.db
     - purano/run_clustering.py
+    - purano/clusterer/clusterer.py
     params:
     - configs/clusterer.jsonnet:
       - clustering_params.affinity
@@ -42,6 +43,8 @@ stages:
       - entities_key
       - fix_hosts
       - hosts_penalty
+      - fix_time
+      - time_penalty
     outs:
     - output/clusters.json
   evaluate_train:

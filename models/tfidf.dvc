@@ -1,0 +1,3 @@
+outs:
+- md5: 9f24cf32aa455b6e2aeec60bb6e4fe04.dir
+  path: tfidf
