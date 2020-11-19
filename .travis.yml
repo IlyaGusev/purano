@@ -13,4 +13,14 @@ before_script:
   - dvc pull
 
 script:
-  - dvc repro -f
+  - dvc repro -f annotate_train
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GH_GITHUB_TOKEN
+  keep_history: false
+  local_dir: html
+  verbose: true
+  on:
+    branch: master

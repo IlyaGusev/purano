@@ -21,7 +21,7 @@ annotate_train:
     --sort-by-date --output-file output/train_annotated.db --input-file output/train_parsed.db
   deps:
   - path: configs/annotator.jsonnet
-    md5: 9a4f379505eb53f5a153d438f114db5c
+    md5: a0fe86e979f443893f37a2c76df3e273
   - path: output/train_parsed.db
     md5: 73806e15e4e41285075c3f5c4a6d8ef5
   - path: purano/run_annotate.py
