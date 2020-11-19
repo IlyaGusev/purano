@@ -26,6 +26,7 @@ pyonmttok >= 1.22.1
 allennlp >= 1.1.0
 fasttext >= 0.9.1
 slovnet == 0.4.0
+pymorphy2[fast] == 0.9.1
 
 # Packages for visualizations.
 jupyter >= 1.0.0
