@@ -6,21 +6,11 @@ branches:
   only:
     - master
 
-addons:
-  apt:
-    update: true
-    packages:
-      - python3-pip
-
 before_script:
   - sudo wget https://dvc.org/deb/dvc.list -O /etc/apt/sources.list.d/dvc.list
   - sudo apt-get update
   - sudo apt-get install dvc
-  - git clone https://github.com/IlyaGusev/purano
-  - python3 -m pip install -r purano/requirements.txt
-  - cd purano
   - dvc pull
 
 script:
-  - cd purano
   - dvc repro -f
