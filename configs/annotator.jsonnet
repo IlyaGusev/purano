@@ -29,7 +29,7 @@
         },
         "tfidf_keywords": {
             "type": "tfidf_keywords",
-            "idfs_vocabulary": "./models/idfs.txt",
+            "idfs_vocabulary": "./models/tfidf/ru_idfs.txt",
             "top_k": 15
         }
     },
