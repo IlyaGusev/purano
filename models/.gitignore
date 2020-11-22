@@ -1,6 +1,5 @@
 /ru_vectors_v3.bin
 /lang_detect
 /cat_detect
-/fasttext
 /slovnet
-/tfidf
+/fasttext

@@ -28,13 +28,14 @@ def cluster(
         sort_by_date,
         nrows
     )
+    clusterer.calc_distances()
     clusterer.cluster()
     clusterer.print_clusters()
     clusterer.save(output_file)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input-file", type=str, default="output/annotated.db")
+    parser.add_argument("--input-file", type=str, default="output/train_annotated.db")
     parser.add_argument("--nrows", type=int, default=None)
     parser.add_argument("--sort-by-date", default=False,  action='store_true')
     parser.add_argument("--start-date", type=str, default=None)

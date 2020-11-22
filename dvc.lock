@@ -5,7 +5,7 @@ parse_train:
   - path: data/documents/ru_tg_0525.jsonl
     md5: 6713a796a0f2d50a7ec63a744b68eee1
   - path: purano/run_parse.py
-    md5: 9b6d334316d2a3f654949d413ac7d15f
+    md5: 6853d72844936f606d15b703f87b3a24
   params:
     configs/cleaner.jsonnet:
       cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
@@ -21,48 +21,53 @@ annotate_train:
     --sort-by-date --output-file output/train_annotated.db --input-file output/train_parsed.db
   deps:
   - path: configs/annotator.jsonnet
-    md5: a0fe86e979f443893f37a2c76df3e273
+    md5: 30a30114de3323a09eddbdcbc5c520c0
+  - path: models/text2title/ru_ft_text_embedder.pt
+    md5: 631c105304096913b4a78d4006bf8d4d
+  - path: models/text2title/ru_ft_title_embedder.pt
+    md5: 878ff619c51d4923f9b495a5d650cb3e
   - path: output/train_parsed.db
     md5: 73806e15e4e41285075c3f5c4a6d8ef5
   - path: purano/run_annotate.py
     md5: 054645ecf679834a8cad348d1dae1ba6
   outs:
   - path: output/train_annotated.db
-    md5: ead1158192ea87e48d4a06dac9f76fe1
+    md5: 47be66c6380f41f7a18c08b85ef11181
 clustering_train:
   cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
     --output-file output/clusters.json --input-file output/train_annotated.db
   deps:
   - path: output/train_annotated.db
-    md5: ead1158192ea87e48d4a06dac9f76fe1
+    md5: 47be66c6380f41f7a18c08b85ef11181
   - path: purano/clusterer/clusterer.py
-    md5: 08a93e9909a669bdf6df9b97ed9c3847
+    md5: ad9d6088fd5b6029201528b0a1a9e8be
   - path: purano/run_clustering.py
-    md5: 85ed83c3511d05ca464f42b56aa2bdd4
+    md5: 71eb27384b9bea718c73a4ebd51638f3
   params:
     configs/clusterer.jsonnet:
-      clustering_params.affinity: precomputed
-      clustering_params.distance_threshold: 0.36
-      clustering_params.linkage: average
-      clustering_params.n_clusters:
-      clustering_type: agglomerative
-      embeddings.aggregation: concat
-      embeddings.keys:
+      clustering:
+        type: agglomerative
+        affinity: precomputed
+        linkage: average
+        distance_threshold: 0.36
+        n_clusters:
+      distances.fix_hosts: true
+      distances.fix_time: false
+      distances.hosts_penalty: 5.0
+      distances.time_penalty: 4.0
+      fetching.embeddings.aggregation: concat
+      fetching.embeddings.keys:
       - text_linear_fasttext_embedding
       - title_linear_fasttext_embedding
-      embeddings.weights:
+      fetching.embeddings.weights:
       - 1.0
       - 1.0
-      entities_key: title_slovnet_ner
-      fix_hosts: true
-      fix_time: false
-      hosts_penalty: 5.0
-      time_penalty: 4.0
+      fetching.entities_key: title_slovnet_ner
   outs:
   - path: output/clusters.json
-    md5: afefe0e6a4fb6f798907ee63ced3b06d
+    md5: d770b6bd8141088a224bb66e91790365
 evaluate_train:
-  cmd: python3 -m purano.run_evaluate --clustering-markup data/markup/ru_clustering_0525.tsv
+  cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
     --original-json data/documents/ru_tg_0525.jsonl --threads-json output/clusters.json
     --output-json output/metrics.json
   deps:
@@ -71,9 +76,58 @@ evaluate_train:
   - path: data/markup/ru_clustering_0525.tsv
     md5: 87705bb85e7e4a96662a6af85350f063
   - path: output/clusters.json
-    md5: afefe0e6a4fb6f798907ee63ced3b06d
+    md5: d770b6bd8141088a224bb66e91790365
   - path: purano/run_evaluate.py
-    md5: bd4fcd1b62016bcf41d55218806b4a91
+    md5: fd99b9efbeb0872c8ec27d745c7b2caa
   outs:
   - path: output/metrics.json
-    md5: 32170680c80eb4c98aa00043e6f9dbc5
+    md5: cdf5055526d40e9a19c5bcd90e871cf1
+training_tfidf_model:
+  cmd: python3 -m purano.training.train_tfidf --config-file configs/training/tfidf.jsonnet
+    --input-file data/documents/ru_tg_0511_0517.jsonl --output-file models/tfidf/ru_idfs.txt
+  deps:
+  - path: data/documents/ru_tg_0511_0517.jsonl
+    md5: da62375b0016e60e5542be00534c3a2c
+  - path: purano/training/models/tfidf.py
+    md5: c05494f9ca21d65201a713d1d07dcc65
+  - path: purano/training/train_tfidf.py
+    md5: c4770f034fa35bbb80b710a7ed319f79
+  params:
+    configs/training/tfidf.jsonnet:
+      max_df: 0.2
+      min_df: 20
+  outs:
+  - path: models/tfidf/ru_idfs.txt
+    md5: 124440e90f2533842f8157b9af8f8a1e
+training_text2title_model:
+  cmd: python3 -m purano.training.train_text2title --config-file configs/training/text2title.jsonnet
+    --train-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --val-file data/documents/ru_tg_0511_0517.jsonl
+    --output-title-model-path models/text2title/ru_ft_title_embedder.pt --output-text-model-path
+    models/text2title/ru_ft_text_embedder.pt --train-sample-rate 0.2 --val-sample-rate
+    0.2
+  deps:
+  - path: data/documents/ru_tg_0511_0517.jsonl
+    md5: da62375b0016e60e5542be00534c3a2c
+  - path: data/documents/ru_tg_1101_0510.jsonl.tar.gz
+    md5: ec5d8322478b4b7d8a17ea4db4998559
+  - path: models/fasttext/ru_vectors_v3.bin
+    md5: 5f67e2397661798d4f5091423efbcfde
+  - path: purano/training/datasets/text2title.py
+    md5: 5f8a4abb2a7f69d858307175f4ac5ef0
+  - path: purano/training/models/text2title.py
+    md5: 34190266e06ff5da9cc184e543df9bfb
+  - path: purano/training/train_text2title.py
+    md5: e8faf67ed61f3e2da7c56825a5eb74e2
+  params:
+    configs/training/text2title.jsonnet:
+      batch_size: 64
+      epochs: 100
+      ft_vector_model_path: models/fasttext/ru_vectors_v3.bin
+      max_words: 150
+      num_workers: 5
+      patience: 4
+  outs:
+  - path: models/text2title/ru_ft_text_embedder.pt
+    md5: 631c105304096913b4a78d4006bf8d4d
+  - path: models/text2title/ru_ft_title_embedder.pt
+    md5: 878ff619c51d4923f9b495a5d650cb3e

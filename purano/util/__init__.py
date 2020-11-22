@@ -1,5 +1,7 @@
 import os
+import shutil
 import string
+
 from pyonmttok import Tokenizer
 from pymorphy2 import MorphAnalyzer
 
@@ -39,4 +41,14 @@ def tokenize_to_lemmas(text):
     tokens = filter(lambda x: len(x) >= 2, tokens)
     tokens = [morph.parse(token)[0].normal_form for token in tokens]
     return tokens
+
+
+def get_true_file(file_path):
+    if file_path.endswith(".tar.gz"):
+        true_file_path = file_path.replace(".tar.gz", "")
+        if not os.path.exists(true_file_path):
+            dir_path = os.path.dirname(os.path.realpath(file_path))
+            shutil.unpack_archive(file_path, dir_path)
+        file_path = true_file_path
+    return file_path
 

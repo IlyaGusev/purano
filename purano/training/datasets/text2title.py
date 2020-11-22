@@ -5,6 +5,7 @@ import numpy as np
 import torch
 
 from purano.training.datasets.fasttext_based import FastTextBasedDataset
+from purano.util import tokenize
 
 class Text2TitleDataset(FastTextBasedDataset):
     def __init__(self, data, ft_model, tokenizer, min_words=2, max_words=150):
@@ -15,8 +16,8 @@ class Text2TitleDataset(FastTextBasedDataset):
         for count, row in enumerate(data):
             if count % 10000 == 0:
                 print(count)
-            title_words = self.preprocess(row["title"]).split(" ")
-            text_words = self.preprocess(row["text"]).split(" ")[:max_words]
+            title_words = tokenize(row["title"])
+            text_words = tokenize(row["text"])[:max_words]
             if len(text_words) < min_words or len(title_words) < min_words:
                 continue
             title = " ".join(title_words)

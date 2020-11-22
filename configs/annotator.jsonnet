@@ -15,12 +15,12 @@
         "fasttext_text_linear": {
             "type": "fasttext",
             "vector_model_path": "./models/fasttext/ru_vectors_v3.bin",
-            "torch_model_path": "./models/fasttext/ru_text_embedder_v1.pt"
+            "torch_model_path": "./models/text2title/ru_ft_text_embedder.pt"
         },
         "fasttext_title_linear": {
             "type": "fasttext",
             "vector_model_path": "./models/fasttext/ru_vectors_v3.bin",
-            "torch_model_path": "./models/fasttext/ru_title_embedder_v1.pt"
+            "torch_model_path": "./models/text2title/ru_ft_title_embedder.pt"
         },
         "ner_slovnet": {
             "type": "ner_slovnet",

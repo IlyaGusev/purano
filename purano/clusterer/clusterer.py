@@ -6,12 +6,10 @@ from collections import defaultdict, Counter
 import numpy as np
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
 from nltk.stem.snowball import SnowballStemmer
-from razdel import tokenize
 from scipy.special import expit
 from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.cluster import AgglomerativeClustering, DBSCAN
 from sklearn.metrics import pairwise_distances
-from torch.utils.tensorboard import SummaryWriter
 
 from purano.models import Document
 from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
@@ -19,14 +17,13 @@ from purano.proto.info_pb2 import EntitySpan as EntitySpanPb
 # TODO: agency2vec
 # TODO: extracting geo
 
+CLUSTERINGS = {
+    "agglomerative": AgglomerativeClustering,
+    "dbscan": DBSCAN
+}
 
 class Clusterer:
     def __init__(self, db_session, config_path: str):
-        self.clusterings = {
-            "agglomerative": AgglomerativeClustering,
-            "dbscan": DBSCAN
-        }
-        self.stemmer = SnowballStemmer("russian")
         self.config = json.loads(jsonnet_evaluate_file(config_path))
         self.db_session = db_session
         self.vectors = None
@@ -39,6 +36,8 @@ class Clusterer:
 
         self.id2num = dict()
         self.keyword2nums = defaultdict(list)
+
+        self.distances = None
 
         self.labels = dict()
         self.clusters = defaultdict(list)
@@ -71,9 +70,10 @@ class Clusterer:
         nrows: Optional[int]=None
     ):
         print("Fetching documents from database...")
-        embeddings_config = self.config.pop("embeddings")
-        entities_key = self.config.pop("entities_key", None)
-        keywords_key = self.config.pop("keywords_key", None)
+        config = self.config["fetching"]
+        embeddings_config = config["embeddings"]
+        entities_key = config.pop("entities_key", None)
+        keywords_key = config.pop("keywords_key", None)
 
         query = self.db_session.query(Document)
         if start_date:
@@ -114,15 +114,20 @@ class Clusterer:
 
         self.vectors = np.array(vectors)
 
-    def cluster(self):
-        fix_hosts = self.config.pop("fix_hosts", False)
-        fix_time = self.config.pop("fix_time", False)
-        hosts_penalty = self.config.pop("hosts_penalty", 1.0)
 
-        time_penalty_modifier = self.config.pop("time_penalty", 1.0)
+    def calc_distances(self):
+        config = self.config["distances"]
+        if self.distances is not None and config.get("cache_distances", False):
+            return
+
         print("Calculating distances matrix...")
+        fix_hosts = config.pop("fix_hosts", False)
+        fix_time = config.pop("fix_time", False)
+        hosts_penalty = config.pop("hosts_penalty", 1.0)
+        time_penalty_modifier = config.pop("time_penalty", 1.0)
+
         max_distance = 1.0
-        distances = np.full((len(self.num2doc), len(self.num2doc)), max_distance, dtype=np.float32)
+        distances = np.full((len(self.num2doc), len(self.num2doc)), max_distance, dtype=np.float64)
         for i, (keyword, doc_nums) in enumerate(self.keyword2nums.items()):
             vectors = self.vectors[doc_nums]
             batch_distances = pairwise_distances(vectors, metric="cosine", n_jobs=1, force_all_finite=False)
@@ -135,20 +140,37 @@ class Clusterer:
                     hours_shifted = (time_diff / 3600) - 12
                     time_penalty = 1.0 + expit(hours_shifted) * (time_penalty_modifier - 1.0)
                     distances[g1, g2] = min(max_distance, distances[g1, g2] * time_penalty)
- 
+        self.distances = distances
+
+
+    def cluster(self):
         print("Running clustering algorithm...")
-        clustering_type = self.config.pop("clustering_type")
-        clustering_params = self.config.pop("clustering_params")
-        clustering = self.clusterings[clustering_type](**clustering_params)
-        labels = clustering.fit_predict(distances)
+        config = self.config["clustering"]
+        clustering_type = config.pop("type")
+        clustering = CLUSTERINGS[clustering_type](**config)
+        labels = clustering.fit_predict(self.distances)
+        max_label = max(labels)
         for label, doc in zip (labels, self.num2doc):
             self.labels[doc.id] = label
             self.clusters[label].append(doc.id)
+        noisy_docs = self.clusters.pop(-1, tuple())
+        for doc_id in noisy_docs:
+            max_label += 1
+            self.labels[doc_id] = max_label
+            self.clusters[max_label].append(doc_id)
+
+    def get_labels(self):
+        labels = dict()
+        for doc_id, label in self.labels.items():
+            document = self.num2doc[self.id2num[doc_id]]
+            labels[document.url] = label
+        return labels
+
+    def reset_clusters(self):
+        self.labels = dict()
+        self.clusters = defaultdict(list)
 
     def print_clusters(self, n=5):
-        noisy_count = len(self.clusters.get(-1)) if -1 in self.clusters else 0
-        print("Noisy samples: {}".format(noisy_count))
-
         clusters = list(self.clusters.items())
         clusters.sort(key=lambda x: len(x[1]), reverse=True)
 
@@ -173,20 +195,15 @@ class Clusterer:
     def collect_entities(self, spans, text):
         loc = []
         per = []
+        stemmer = SnowballStemmer("russian")
         for span in spans:
             span_text = text[span.begin:span.end]
-            span_text = [self.stemmer.stem(token.text) for token in tokenize(span_text)]
+            span_text = [stemmer.stem(token) for token in span_text.split(" ")]
             if span.tag == EntitySpanPb.Tag.Value("LOC"):
                 loc.extend(span_text)
             elif span.tag == EntitySpanPb.Tag.Value("PER"):
                 per.extend(span_text)
         return {"loc": loc, "per": per}
-
-    def save_to_tensorboard(self):
-        # NOT WORKING
-        writer = SummaryWriter()
-        writer.add_embedding(self.vectors, metadata, metadata_header=ClusteredDocument.get_header())
-        writer.close()
 
     def save(self, output_file_name):
         clusters = []

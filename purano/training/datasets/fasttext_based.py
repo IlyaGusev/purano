@@ -3,16 +3,12 @@ import numpy as np
 from hnswlib import Index as HnswIndex
 from torch.utils.data import Dataset
 
+from purano.util import tokenize
+
 class FastTextBasedDataset(Dataset):
     def __init__(self, ft_model, tokenizer):
         self.ft_model = ft_model
         self.tokenizer = tokenizer
-
-    def preprocess(self, text):
-        text = str(text).strip().replace("\n", " ").replace("\xa0", " ").lower()
-        tokens, _ = self.tokenizer.tokenize(text)
-        text = " ".join(tokens)
-        return text
 
     def words_to_embeddings(self, words):
         vector_dim = self.ft_model.get_dimension()
@@ -36,7 +32,7 @@ class FastTextBasedDataset(Dataset):
         hnsw.init_index(max_elements=len(data), ef_construction=100, M=16)
         embeddings = np.zeros((len(data), vector_dim))
         for i, record in enumerate(data):
-            title = self.preprocess(record["title"])
+            title = " ".join(tokenize(record["title"]))
             embeddings[i] = self.embed_text(title)
         hnsw.add_items(embeddings)
         return hnsw

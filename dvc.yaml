@@ -21,6 +21,8 @@ stages:
     - configs/annotator.jsonnet
     - output/train_parsed.db
     - purano/run_annotate.py
+    - models/text2title/ru_ft_text_embedder.pt
+    - models/text2title/ru_ft_title_embedder.pt
     outs:
     - output/train_annotated.db
   clustering_train:
@@ -32,23 +34,19 @@ stages:
     - purano/clusterer/clusterer.py
     params:
     - configs/clusterer.jsonnet:
-      - clustering_params.affinity
-      - clustering_params.distance_threshold
-      - clustering_params.linkage
-      - clustering_params.n_clusters
-      - clustering_type
-      - embeddings.aggregation
-      - embeddings.keys
-      - embeddings.weights
-      - entities_key
-      - fix_hosts
-      - hosts_penalty
-      - fix_time
-      - time_penalty
+      - clustering
+      - fetching.embeddings.aggregation
+      - fetching.embeddings.keys
+      - fetching.embeddings.weights
+      - fetching.entities_key
+      - distances.fix_hosts
+      - distances.hosts_penalty
+      - distances.fix_time
+      - distances.time_penalty
     outs:
     - output/clusters.json
   evaluate_train:
-    cmd: python3 -m purano.run_evaluate --clustering-markup data/markup/ru_clustering_0525.tsv
+    cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
       --original-json data/documents/ru_tg_0525.jsonl --threads-json output/clusters.json
       --output-json output/metrics.json
     deps:
@@ -59,3 +57,40 @@ stages:
     metrics:
     - output/metrics.json:
         cache: false
+  training_tfidf_model:
+    cmd: python3 -m purano.training.train_tfidf --config-file configs/training/tfidf.jsonnet
+      --input-file data/documents/ru_tg_0511_0517.jsonl --output-file models/tfidf/ru_idfs.txt
+    deps:
+    - data/documents/ru_tg_0511_0517.jsonl
+    - purano/training/models/tfidf.py
+    - purano/training/train_tfidf.py
+    params:
+    - configs/training/tfidf.jsonnet:
+      - max_df
+      - min_df
+    outs:
+    - models/tfidf/ru_idfs.txt
+  training_text2title_model:
+    cmd: python3 -m purano.training.train_text2title --config-file configs/training/text2title.jsonnet
+      --train-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --val-file data/documents/ru_tg_0511_0517.jsonl
+      --output-title-model-path models/text2title/ru_ft_title_embedder.pt --output-text-model-path
+      models/text2title/ru_ft_text_embedder.pt --train-sample-rate 0.2 --val-sample-rate
+      0.2
+    deps:
+    - data/documents/ru_tg_0511_0517.jsonl
+    - data/documents/ru_tg_1101_0510.jsonl.tar.gz
+    - models/fasttext/ru_vectors_v3.bin
+    - purano/training/datasets/text2title.py
+    - purano/training/models/text2title.py
+    - purano/training/train_text2title.py
+    params:
+    - configs/training/text2title.jsonnet:
+      - batch_size
+      - epochs
+      - ft_vector_model_path
+      - max_words
+      - num_workers
+      - patience
+    outs:
+    - models/text2title/ru_ft_text_embedder.pt
+    - models/text2title/ru_ft_title_embedder.pt

@@ -11,10 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from pyonmttok import Tokenizer
 
 from purano.models import Document, Base
-from purano.readers.tg_html import parse_tg_html_dir
-from purano.readers.tg_jsonl import parse_tg_jsonl_dir, parse_tg_jsonl
-from purano.readers.csv import parse_csv_dir, parse_csv
-
+from purano.readers import parse_tg_html_dir, parse_tg_jsonl_dir, parse_tg_jsonl, parse_csv_dir, parse_csv
 
 FASTTEXT_LABEL_OFFSET = len("__label__")
 
