@@ -1,87 +1,3 @@
-parse_train:
-  cmd: python3 -m purano.run_parse --inputs data/documents/ru_tg_0525.jsonl --fmt
-    jsonl --output-file output/train_parsed.db --cleaner-config configs/cleaner.jsonnet
-  deps:
-  - path: data/documents/ru_tg_0525.jsonl
-    md5: 6713a796a0f2d50a7ec63a744b68eee1
-  - path: purano/run_parse.py
-    md5: 6853d72844936f606d15b703f87b3a24
-  params:
-    configs/cleaner.jsonnet:
-      cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
-      is_lower: true
-      is_news_only: true
-      is_russian_only: true
-      lang_detect_model_path: models/lang_detect/lang_detect_v10.ftz
-  outs:
-  - path: output/train_parsed.db
-    md5: 73806e15e4e41285075c3f5c4a6d8ef5
-annotate_train:
-  cmd: python3 -m purano.run_annotate --config configs/annotator.jsonnet --reannotate
-    --sort-by-date --output-file output/train_annotated.db --input-file output/train_parsed.db
-  deps:
-  - path: configs/annotator.jsonnet
-    md5: 30a30114de3323a09eddbdcbc5c520c0
-  - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 631c105304096913b4a78d4006bf8d4d
-  - path: models/text2title/ru_ft_title_embedder.pt
-    md5: 878ff619c51d4923f9b495a5d650cb3e
-  - path: output/train_parsed.db
-    md5: 73806e15e4e41285075c3f5c4a6d8ef5
-  - path: purano/run_annotate.py
-    md5: 054645ecf679834a8cad348d1dae1ba6
-  outs:
-  - path: output/train_annotated.db
-    md5: 47be66c6380f41f7a18c08b85ef11181
-clustering_train:
-  cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
-    --output-file output/clusters.json --input-file output/train_annotated.db
-  deps:
-  - path: output/train_annotated.db
-    md5: 47be66c6380f41f7a18c08b85ef11181
-  - path: purano/clusterer/clusterer.py
-    md5: ad9d6088fd5b6029201528b0a1a9e8be
-  - path: purano/run_clustering.py
-    md5: 71eb27384b9bea718c73a4ebd51638f3
-  params:
-    configs/clusterer.jsonnet:
-      clustering:
-        type: agglomerative
-        affinity: precomputed
-        linkage: average
-        distance_threshold: 0.36
-        n_clusters:
-      distances.fix_hosts: true
-      distances.fix_time: false
-      distances.hosts_penalty: 5.0
-      distances.time_penalty: 4.0
-      fetching.embeddings.aggregation: concat
-      fetching.embeddings.keys:
-      - text_linear_fasttext_embedding
-      - title_linear_fasttext_embedding
-      fetching.embeddings.weights:
-      - 1.0
-      - 1.0
-      fetching.entities_key: title_slovnet_ner
-  outs:
-  - path: output/clusters.json
-    md5: d770b6bd8141088a224bb66e91790365
-evaluate_train:
-  cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
-    --original-json data/documents/ru_tg_0525.jsonl --threads-json output/clusters.json
-    --output-json output/metrics.json
-  deps:
-  - path: data/documents/ru_tg_0525.jsonl
-    md5: 6713a796a0f2d50a7ec63a744b68eee1
-  - path: data/markup/ru_clustering_0525.tsv
-    md5: 87705bb85e7e4a96662a6af85350f063
-  - path: output/clusters.json
-    md5: d770b6bd8141088a224bb66e91790365
-  - path: purano/run_evaluate.py
-    md5: fd99b9efbeb0872c8ec27d745c7b2caa
-  outs:
-  - path: output/metrics.json
-    md5: cdf5055526d40e9a19c5bcd90e871cf1
 training_tfidf_model:
   cmd: python3 -m purano.training.train_tfidf --config-file configs/training/tfidf.jsonnet
     --input-file data/documents/ru_tg_0511_0517.jsonl --output-file models/tfidf/ru_idfs.txt
@@ -131,3 +47,87 @@ training_text2title_model:
     md5: 631c105304096913b4a78d4006bf8d4d
   - path: models/text2title/ru_ft_title_embedder.pt
     md5: 878ff619c51d4923f9b495a5d650cb3e
+parse_0525:
+  cmd: python3 -m purano.run_parse --inputs data/documents/ru_tg_0525.jsonl --fmt
+    jsonl --output-file output/0525_parsed.db --cleaner-config configs/cleaner.jsonnet
+  deps:
+  - path: data/documents/ru_tg_0525.jsonl
+    md5: 6713a796a0f2d50a7ec63a744b68eee1
+  - path: purano/run_parse.py
+    md5: 6853d72844936f606d15b703f87b3a24
+  params:
+    configs/cleaner.jsonnet:
+      cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
+      is_lower: true
+      is_news_only: true
+      is_russian_only: true
+      lang_detect_model_path: models/lang_detect/lang_detect_v10.ftz
+  outs:
+  - path: output/0525_parsed.db
+    md5: 73806e15e4e41285075c3f5c4a6d8ef5
+annotate_0525:
+  cmd: python3 -m purano.run_annotate --config configs/annotator.jsonnet --reannotate
+    --sort-by-date --output-file output/0525_annotated.db --input-file output/0525_parsed.db
+  deps:
+  - path: configs/annotator.jsonnet
+    md5: 30a30114de3323a09eddbdcbc5c520c0
+  - path: models/text2title/ru_ft_text_embedder.pt
+    md5: 631c105304096913b4a78d4006bf8d4d
+  - path: models/text2title/ru_ft_title_embedder.pt
+    md5: 878ff619c51d4923f9b495a5d650cb3e
+  - path: output/0525_parsed.db
+    md5: 73806e15e4e41285075c3f5c4a6d8ef5
+  - path: purano/run_annotate.py
+    md5: 054645ecf679834a8cad348d1dae1ba6
+  outs:
+  - path: output/0525_annotated.db
+    md5: 47be66c6380f41f7a18c08b85ef11181
+clustering_0525:
+  cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
+    --output-file output/0525_clusters.json --input-file output/0525_annotated.db
+  deps:
+  - path: output/0525_annotated.db
+    md5: 47be66c6380f41f7a18c08b85ef11181
+  - path: purano/clusterer/clusterer.py
+    md5: ad9d6088fd5b6029201528b0a1a9e8be
+  - path: purano/run_clustering.py
+    md5: 71eb27384b9bea718c73a4ebd51638f3
+  params:
+    configs/clusterer.jsonnet:
+      clustering:
+        type: agglomerative
+        affinity: precomputed
+        linkage: average
+        distance_threshold: 0.36
+        n_clusters:
+      distances.fix_hosts: true
+      distances.fix_time: false
+      distances.hosts_penalty: 5.0
+      distances.time_penalty: 4.0
+      fetching.embeddings.aggregation: concat
+      fetching.embeddings.keys:
+      - text_linear_fasttext_embedding
+      - title_linear_fasttext_embedding
+      fetching.embeddings.weights:
+      - 1.0
+      - 1.0
+      fetching.entities_key: title_slovnet_ner
+  outs:
+  - path: output/0525_clusters.json
+    md5: d770b6bd8141088a224bb66e91790365
+evaluate_0525:
+  cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
+    --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
+    --output-json output/0525_metrics.json
+  deps:
+  - path: data/documents/ru_tg_0525.jsonl
+    md5: 6713a796a0f2d50a7ec63a744b68eee1
+  - path: data/markup/ru_clustering_0525.tsv
+    md5: 87705bb85e7e4a96662a6af85350f063
+  - path: output/0525_clusters.json
+    md5: d770b6bd8141088a224bb66e91790365
+  - path: purano/run_evaluate.py
+    md5: fd99b9efbeb0872c8ec27d745c7b2caa
+  outs:
+  - path: output/0525_metrics.json
+    md5: cdf5055526d40e9a19c5bcd90e871cf1
