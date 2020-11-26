@@ -88,9 +88,9 @@ if __name__ == "__main__":
     parser.add_argument("--train-sample-rate", type=float, default=1.0)
     parser.add_argument("--val-sample-rate", type=float, default=1.0)
     parser.add_argument("--output-title-model-path", type=str,
-                        default="models/fasttext/ru_title_embedder_v1.pt")
+                        default="models/text2title/ru_ft_title_embedder.pt")
     parser.add_argument("--output-text-model-path", type=str,
-                        default="models/fasttext/ru_text_embedder_v1.pt")
+                        default="models/text2title/ru_ft_text_embedder.pt")
     parser.add_argument("--random-seed", type=int, default=42)
 
     args = parser.parse_args()
