@@ -4,9 +4,6 @@ from typing import List
 import numpy as np
 import torch
 import pyonmttok
-from allennlp.modules.elmo import _ElmoBiLm, batch_to_ids
-from allennlp.nn.util import remove_sentence_boundaries
-from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
 
 from purano.annotator.processors import Processor
 from purano.models import Document
@@ -15,6 +12,8 @@ from purano.proto.info_pb2 import Info as InfoPb
 @Processor.register("elmo")
 class ElmoProcessor(Processor):
     def __init__(self, options_file: str, weight_file: str, cuda_device: int):
+        from allennlp.modules.elmo import _ElmoBiLm
+        from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
         self.indexer = ELMoTokenCharactersIndexer()
         self.elmo_bilm = _ElmoBiLm(options_file, weight_file)
         if cuda_device >= 0:
@@ -29,6 +28,9 @@ class ElmoProcessor(Processor):
         output_field: str,
         max_tokens_count: int
     ):
+        from allennlp.modules.elmo import batch_to_ids
+        from allennlp.nn.util import remove_sentence_boundaries
+
         batch = []
         for doc_num, doc in enumerate(docs):
             sample = " ".join([getattr(doc, input_field) for input_field in input_fields])
