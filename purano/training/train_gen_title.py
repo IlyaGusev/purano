@@ -3,7 +3,7 @@ import json
 import random
 
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
-from transformers import AutoTokenizer, EncoderDecoderModel, Trainer, TrainingArguments
+from transformers import AutoTokenizer, EncoderDecoderModel, Trainer, TrainingArguments, logging
 
 from purano.readers.tg_jsonl import parse_tg_jsonl
 from purano.training.datasets import GenTitleDataset
@@ -18,11 +18,11 @@ def train_gen_title(
     val_sample_rate: float,
     output_model_path: str,
 ):
-
     train_file = get_true_file(train_file)
     val_file = get_true_file(val_file)
     assert train_file.endswith(".jsonl")
     assert val_file.endswith(".jsonl")
+    logging.set_verbosity_info()
 
     config = json.loads(jsonnet_evaluate_file(config_file))
 
@@ -32,7 +32,7 @@ def train_gen_title(
 
     print("Building datasets...")
     model_path = config.pop("model_path")
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, do_lower_case=False)
 
     max_tokens_text = config.pop("max_tokens_text", 196)
     max_tokens_title = config.pop("max_tokens_title", 48)
@@ -55,7 +55,7 @@ def train_gen_title(
     model = EncoderDecoderModel.from_encoder_decoder_pretrained(model_path, model_path)
 
     print("Training model...")
-    batch_size = config.pop("batch_size", 4)
+    batch_size = config.pop("batch_size", 8)
     eval_steps = config.pop("eval_steps", 10000)
     save_steps = config.pop("save_steps", 10000)
     logging_steps = config.pop("logging_steps", 100)
@@ -69,7 +69,7 @@ def train_gen_title(
         evaluate_during_training=True,
         do_train=True,
         do_eval=True,
-        overwrite_output_dir=True,
+        overwrite_output_dir=False,
         logging_steps=logging_steps,
         save_steps=save_steps,
         eval_steps=eval_steps,

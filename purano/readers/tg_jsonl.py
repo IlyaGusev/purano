@@ -7,7 +7,7 @@ from purano.util import parse_dir
 
 
 def parse_tg_jsonl(file_name):
-    with open(file_name, "r") as f:
+    with open(file_name, "r", encoding="utf-8") as f:
         for line in f:
             record = json.loads(line)
             assert "title" in record
