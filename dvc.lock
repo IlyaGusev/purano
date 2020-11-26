@@ -29,11 +29,11 @@ training_text2title_model:
   - path: models/fasttext/ru_vectors_v3.bin
     md5: 5f67e2397661798d4f5091423efbcfde
   - path: purano/training/datasets/text2title.py
-    md5: 5f8a4abb2a7f69d858307175f4ac5ef0
+    md5: 577eef769994449f44d9c18b14c9faca
   - path: purano/training/models/text2title.py
     md5: 34190266e06ff5da9cc184e543df9bfb
   - path: purano/training/train_text2title.py
-    md5: 4e95c36bb270665b1a91e715bd90b210
+    md5: d7722ecc4280fe70eca4bdeeab3e9d03
   params:
     configs/training/text2title.jsonnet:
       batch_size: 64
@@ -44,9 +44,9 @@ training_text2title_model:
       patience: 4
   outs:
   - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 70aa1ac520ed976360da2a6f46c12d06
+    md5: d2c73eb505b1d878713956c927fea817
   - path: models/text2title/ru_ft_title_embedder.pt
-    md5: d521fa3c5fb23fcc9613ca03cdfe5e8a
+    md5: 7e0aa4af6f3ed4b5f90411bf23d76e15
 parse_0525:
   cmd: python3 -m purano.run_parse --inputs data/documents/ru_tg_0525.jsonl --fmt
     jsonl --output-file output/0525_parsed.db --cleaner-config configs/cleaner.jsonnet
@@ -72,22 +72,22 @@ annotate_0525:
   - path: configs/annotator.jsonnet
     md5: 30a30114de3323a09eddbdcbc5c520c0
   - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 70aa1ac520ed976360da2a6f46c12d06
+    md5: d2c73eb505b1d878713956c927fea817
   - path: models/text2title/ru_ft_title_embedder.pt
-    md5: d521fa3c5fb23fcc9613ca03cdfe5e8a
+    md5: 7e0aa4af6f3ed4b5f90411bf23d76e15
   - path: output/0525_parsed.db
     md5: 73806e15e4e41285075c3f5c4a6d8ef5
   - path: purano/run_annotate.py
     md5: 054645ecf679834a8cad348d1dae1ba6
   outs:
   - path: output/0525_annotated.db
-    md5: 2f986effb66a55f54c3474245eb3a862
+    md5: 573c8e98a9b32ed293da9cda52b1ddfe
 clustering_0525:
   cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
     --output-file output/0525_clusters.json --input-file output/0525_annotated.db
   deps:
   - path: output/0525_annotated.db
-    md5: 2f986effb66a55f54c3474245eb3a862
+    md5: 573c8e98a9b32ed293da9cda52b1ddfe
   - path: purano/clusterer/clusterer.py
     md5: ad9d6088fd5b6029201528b0a1a9e8be
   - path: purano/run_clustering.py
@@ -114,7 +114,7 @@ clustering_0525:
       fetching.entities_key: title_slovnet_ner
   outs:
   - path: output/0525_clusters.json
-    md5: 858a152b653de49646aef9a38fab94c9
+    md5: bd3c29953a2d48c904fe726066cabdd3
 evaluate_0525:
   cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
     --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
@@ -125,9 +125,9 @@ evaluate_0525:
   - path: data/markup/ru_clustering_0525.tsv
     md5: 87705bb85e7e4a96662a6af85350f063
   - path: output/0525_clusters.json
-    md5: 858a152b653de49646aef9a38fab94c9
+    md5: bd3c29953a2d48c904fe726066cabdd3
   - path: purano/run_evaluate.py
     md5: fd99b9efbeb0872c8ec27d745c7b2caa
   outs:
   - path: output/0525_metrics.json
-    md5: 78b8cebeb2d45aa214092c61f6e94db5
+    md5: 7c75551dced2c2d2048a8e0a758e3004

@@ -3,14 +3,15 @@ import random
 
 import numpy as np
 import torch
+from torch.utils.data import Dataset
 
-from purano.training.datasets.fasttext_based import FastTextBasedDataset
 from purano.util import tokenize
+from purano.training.fasttext_hnsw import FasttextHnsw
 
-class Text2TitleDataset(FastTextBasedDataset):
-    def __init__(self, data, ft_model, tokenizer, min_words=2, max_words=150):
-        super().__init__(ft_model, tokenizer)
-        self.hnsw = self.build_titles_hnsw(data)
+class Text2TitleDataset(Dataset):
+    def __init__(self, data, ft_model, min_words=2, max_words=150):
+        self.ft_hnsw = FasttextHnsw(ft_model)
+        self.ft_hnsw.build_hnsw([r["title"] for r in data])
 
         self.samples = []
         for count, row in enumerate(data):
@@ -23,13 +24,13 @@ class Text2TitleDataset(FastTextBasedDataset):
             title = " ".join(title_words)
             text = " ".join(text_words)
 
-            text_vector = self.embed_text(text)
-            title_vector = self.embed_text(title)
+            text_vector = self.ft_hnsw.embed_text(text)
+            title_vector = self.ft_hnsw.embed_text(title)
 
-            labels = list(self.hnsw.knn_query(title_vector, k=20)[0][0])[1:]
+            labels = list(self.ft_hnsw.hnsw.knn_query(title_vector, k=20)[0][0])[1:]
             random.shuffle(labels)
             bad_indices = labels[:2] + [random.randint(0, len(data) - 1)]
-            bad_vectors = self.hnsw.get_items(bad_indices)
+            bad_vectors = self.ft_hnsw.hnsw.get_items(bad_indices)
             for bad_vector in bad_vectors:
                 bad_vector = np.array(bad_vector)
                 assert bad_vector.shape == title_vector.shape == text_vector.shape

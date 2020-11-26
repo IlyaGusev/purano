@@ -37,7 +37,6 @@ def train_text2title(
     print("Loading vectors...")
     ft_model_path = config.pop("ft_vector_model_path", "models/fasttext/ru_vectors_v3.bin")
     ft_model = ft_load_model(ft_model_path)
-    tokenizer = Tokenizer("conservative", joiner_annotate=False)
 
     print("Fetching data...")
     train_records = [r for r in parse_tg_jsonl(train_file) if random.random() <= train_sample_rate]
@@ -48,11 +47,11 @@ def train_text2title(
     batch_size = config.pop("batch_size", 64)
     num_workers = config.pop("num_workers", 5)
 
-    train_data = Text2TitleDataset(train_records, ft_model, tokenizer, max_words=max_words)
+    train_data = Text2TitleDataset(train_records, ft_model, max_words=max_words)
     train_sampler = RandomSampler(train_data)
     train_loader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size, num_workers=num_workers)
 
-    val_data = Text2TitleDataset(val_records, ft_model, tokenizer, max_words=max_words)
+    val_data = Text2TitleDataset(val_records, ft_model, max_words=max_words)
     val_loader = DataLoader(val_data, batch_size=batch_size, num_workers=num_workers)
 
     print("Training model...")
