@@ -4,6 +4,7 @@
         "fasttext_title_text",
         "fasttext_title_linear",
         "fasttext_text_linear",
+        "gen_title_encoder",
         "ner_slovnet_title",
         "tfidf_keywords"
     ],
@@ -31,6 +32,10 @@
             "type": "tfidf_keywords",
             "idfs_vocabulary": "./models/tfidf/ru_idfs.txt",
             "top_k": 15
+        },
+        "gen_title_encoder": {
+            "type": "transformers",
+            "pretrained_model_name_or_path": "./models/gen_title_encoder"
         }
     },
     "fasttext_title": {
@@ -74,5 +79,13 @@
         "processor": "tfidf_keywords",
         "input_fields": ["patched_title", "patched_text"],
         "output_field": "tfidf_keywords"
+    },
+    "gen_title_encoder": {
+        "processor": "gen_title_encoder",
+        "input_fields": ["text"],
+        "output_field": "gen_title_embedding",
+        "max_tokens_count": 196,
+        "layer": -1,
+        "aggregation": "first"
     }
 }

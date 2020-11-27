@@ -7,6 +7,7 @@ from transformers import AutoTokenizer, EncoderDecoderModel, Trainer, TrainingAr
 
 from purano.readers.tg_jsonl import parse_tg_jsonl
 from purano.training.datasets import GenTitleDataset
+from purano.training.models import BottleneckEncoderDecoderModel
 from purano.util import get_true_file
 
 
@@ -17,6 +18,9 @@ def train_gen_title(
     train_sample_rate: float,
     val_sample_rate: float,
     output_model_path: str,
+    enable_bottleneck: bool = False,
+    from_pretrained: str = None,
+    checkpoint: str = None
 ):
     train_file = get_true_file(train_file)
     val_file = get_true_file(val_file)
@@ -52,7 +56,13 @@ def train_gen_title(
         max_tokens_title=max_tokens_title)
 
     print("Initializing model...")
-    model = EncoderDecoderModel.from_encoder_decoder_pretrained(model_path, model_path)
+    if enable_bottleneck:
+        if from_pretrained:
+            model = BottleneckEncoderDecoderModel.from_pretrained(from_pretrained)
+        else:
+            model = BottleneckEncoderDecoderModel.from_encoder_decoder_pretrained(model_path, model_path)
+    else:
+        model = EncoderDecoderModel.from_encoder_decoder_pretrained(model_path, model_path)
 
     print("Training model...")
     batch_size = config.pop("batch_size", 8)
@@ -86,7 +96,7 @@ def train_gen_title(
         eval_dataset=val_dataset,
     )
 
-    trainer.train()
+    trainer.train(checkpoint)
     model.save_pretrained(output_model_path)
 
 
@@ -98,6 +108,9 @@ if __name__ == "__main__":
     parser.add_argument("--train-sample-rate", type=float, default=1.0)
     parser.add_argument("--val-sample-rate", type=float, default=1.0)
     parser.add_argument("--output-model-path", type=str, default="models/gen_title")
+    parser.add_argument("--enable-bottleneck", default=False, action='store_true')
+    parser.add_argument("--from-pretrained", type=str, default=None)
+    parser.add_argument("--checkpoint", type=str, default=None)
 
     args = parser.parse_args()
     train_gen_title(**vars(args))

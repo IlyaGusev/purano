@@ -1,1 +1,2 @@
 from purano.training.models.text2title import Text2TitleModel
+from purano.training.models.bottleneck_encoder_decoder import BottleneckEncoderDecoderModel

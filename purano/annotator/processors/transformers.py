@@ -22,7 +22,8 @@ class TransformersProcessor(Processor):
         input_fields: List[str],
         output_field: str,
         max_tokens_count: int,
-        layer: int
+        layer: int,
+        aggregation: str = "mean||max"
     ):
         batch_input_ids = torch.zeros((len(docs), max_tokens_count), dtype=int)
         batch_mask = torch.zeros((len(docs), max_tokens_count), dtype=int)
@@ -44,6 +45,11 @@ class TransformersProcessor(Processor):
             output = self.model(batch_input_ids, attention_mask=batch_mask, return_dict=True, output_hidden_states=True)
         layer_embeddings = output.hidden_states[layer]
         embeddings = layer_embeddings.cpu().numpy()
-        embeddings = np.concatenate((embeddings.mean(axis=1), embeddings.max(axis=1)), axis=1)
+        if aggregation == "mean||max":
+            embeddings = np.concatenate((embeddings.mean(axis=1), embeddings.max(axis=1)), axis=1)
+        elif aggregation ==  "first":
+            embeddings = embeddings[:, 0, :]
+        else:
+            assert False
         for doc_num, info in enumerate(infos):
             getattr(info, output_field).extend(embeddings[doc_num])

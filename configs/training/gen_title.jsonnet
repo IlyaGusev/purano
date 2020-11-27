@@ -8,5 +8,5 @@
     "logging_steps": 100,
     "learning_rate": 0.00005,
     "warmup_steps": 2000,
-    "num_train_epochs": 3
+    "num_train_epochs": 1
 }

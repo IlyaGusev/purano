@@ -24,4 +24,5 @@ message Info {
     repeated double text_linear_fasttext_embedding = 8;
     repeated string tfidf_keywords = 9;
     repeated double title_text_xlmroberta_embedding = 10;
+    repeated double gen_title_embedding = 11;
 }
