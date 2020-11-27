@@ -14,6 +14,7 @@ before_script:
 
 script:
   - dvc repro -f -s parse_0525 annotate_0525
+  - flake8
 
 deploy:
   provider: pages
