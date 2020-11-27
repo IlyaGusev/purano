@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import numpy as np
@@ -8,6 +7,7 @@ import pyonmttok
 from purano.annotator.processors import Processor
 from purano.models import Document
 from purano.proto.info_pb2 import Info as InfoPb
+
 
 @Processor.register("elmo")
 class ElmoProcessor(Processor):
@@ -21,7 +21,8 @@ class ElmoProcessor(Processor):
         self.cuda_device = cuda_device
         self.tokenizer = pyonmttok.Tokenizer("conservative", joiner_annotate=False)
 
-    def __call__(self,
+    def __call__(
+        self,
         docs: List[Document],
         infos: List[InfoPb],
         input_fields: List[str],
@@ -42,12 +43,17 @@ class ElmoProcessor(Processor):
         bilm_output = self.elmo_bilm(character_ids)
         layer_activations = bilm_output['activations']
         mask_with_bos_eos = bilm_output['mask']
-        without_bos_eos = [remove_sentence_boundaries(layer, mask_with_bos_eos) for layer in layer_activations]
+        without_bos_eos = [
+            remove_sentence_boundaries(layer, mask_with_bos_eos)
+            for layer in layer_activations
+        ]
         embeddings = torch.cat([pair[0].unsqueeze(1) for pair in without_bos_eos], dim=1)
         mask = without_bos_eos[0][1]
         for doc_num, info in enumerate(infos):
             length = int(mask[doc_num, :].sum())
-            doc_embeddings = embeddings[doc_num, :, :length, :].detach().cpu().numpy() if length != 0 else np.zeros((3, 0, 1024))
+            doc_embeddings = np.zeros((3, 0, 1024))
+            if length != 0:
+                doc_embeddings = embeddings[doc_num, :, :length, :].detach().cpu().numpy()
             doc_embeddings = doc_embeddings.swapaxes(0, 1).reshape(doc_embeddings.shape[0], -1)
             mean_embeddings = doc_embeddings.mean(axis=0)
             max_embeddings = doc_embeddings.max(axis=0)
@@ -58,4 +64,3 @@ class ElmoProcessor(Processor):
         text = str(text).strip().replace("\n", " ").replace("\xa0", " ")
         tokens, _ = self.tokenizer.tokenize(text)
         return tokens
-

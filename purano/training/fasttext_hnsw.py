@@ -3,6 +3,7 @@ from hnswlib import Index as HnswIndex
 
 from purano.util import tokenize
 
+
 class FasttextHnsw:
     def __init__(self, model):
         self.model = model

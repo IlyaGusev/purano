@@ -33,6 +33,7 @@ def cluster(
     clusterer.print_clusters()
     clusterer.save(output_file)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-file", type=str, default="output/train_annotated.db")

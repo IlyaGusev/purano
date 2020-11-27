@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import numpy as np
@@ -11,25 +10,28 @@ from purano.models import Document
 from purano.proto.info_pb2 import Info as InfoPb
 from purano.util import tokenize
 
+
 @Processor.register("fasttext")
 class FasttextProcessor(Processor):
-    def __init__(self,
+    def __init__(
+        self,
         vector_model_path: str,
-        torch_model_path: str=None,
+        torch_model_path: str = None
     ):
         self.vector_model = fasttext.load_model(vector_model_path)
         self.torch_model = torch.load(torch_model_path) if torch_model_path else None
         self.tokenizer = pyonmttok.Tokenizer("conservative", joiner_annotate=False)
 
-    def __call__(self,
+    def __call__(
+        self,
         docs: List[Document],
         infos: List[InfoPb],
         input_fields: List[str],
         output_field: str,
         max_tokens_count: int,
         agg_type: str,
-        norm_word_vectors: bool=True,
-        use_preprocessing: bool=True,
+        norm_word_vectors: bool = True,
+        use_preprocessing: bool = True,
         **kwargs
     ):
         assert agg_type in ("mean", "max", "mean||max||min", "linear")
@@ -39,7 +41,8 @@ class FasttextProcessor(Processor):
         word_embeddings = self.calc_word_embeddings(
             docs, input_fields, max_tokens_count,
             norm_word_vectors=norm_word_vectors,
-            use_preprocessing=use_preprocessing)
+            use_preprocessing=use_preprocessing
+        )
 
         final_embeddings = None
         mean_embeddings = np.mean(word_embeddings, axis=1)
@@ -50,7 +53,8 @@ class FasttextProcessor(Processor):
         elif agg_type == "max":
             final_embeddings = max_embeddings
         elif agg_type == "mean||max||min" or agg_type == "linear":
-            final_embeddings = np.concatenate((mean_embeddings, max_embeddings, min_embeddings), axis=1)
+            all_embeddings = (mean_embeddings, max_embeddings, min_embeddings)
+            final_embeddings = np.concatenate(all_embeddings, axis=1)
             if agg_type == "linear":
                 final_embeddings = self.torch_model(torch.tensor(final_embeddings))
 
@@ -58,7 +62,8 @@ class FasttextProcessor(Processor):
         for doc_num, info in enumerate(infos):
             getattr(info, output_field).extend(final_embeddings[doc_num])
 
-    def calc_word_embeddings(self,
+    def calc_word_embeddings(
+        self,
         docs: List[Document],
         input_fields: List[str],
         max_tokens_count: int,
@@ -81,4 +86,3 @@ class FasttextProcessor(Processor):
                 word_embeddings[doc_num, token_num, :] = word_vector
         word_embeddings = word_embeddings[:, :real_max_tokens_count, :]
         return word_embeddings
-

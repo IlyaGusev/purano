@@ -8,6 +8,7 @@ from pymorphy2 import MorphAnalyzer
 tokenizer = Tokenizer("conservative", joiner_annotate=False)
 morph = MorphAnalyzer()
 
+
 def parse_dir(directory, ext, parse_file_func, print_interval=None):
     documents_count = 0
     for r, d, f in os.walk(directory):
@@ -51,4 +52,3 @@ def get_true_file(file_path):
             shutil.unpack_archive(file_path, dir_path)
         file_path = true_file_path
     return file_path
-

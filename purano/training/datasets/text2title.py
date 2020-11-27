@@ -1,4 +1,3 @@
-import json
 import random
 
 import numpy as np
@@ -7,6 +6,7 @@ from torch.utils.data import Dataset
 
 from purano.util import tokenize
 from purano.training.fasttext_hnsw import FasttextHnsw
+
 
 class Text2TitleDataset(Dataset):
     def __init__(self, data, ft_model, min_words=2, max_words=150):

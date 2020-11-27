@@ -4,7 +4,6 @@ import random
 
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
 from fasttext import load_model as ft_load_model
-from pyonmttok import Tokenizer
 from torch.utils.data import DataLoader, RandomSampler
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import EarlyStopping
@@ -49,7 +48,12 @@ def train_text2title(
 
     train_data = Text2TitleDataset(train_records, ft_model, max_words=max_words)
     train_sampler = RandomSampler(train_data)
-    train_loader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size, num_workers=num_workers)
+    train_loader = DataLoader(
+        train_data,
+        sampler=train_sampler,
+        batch_size=batch_size,
+        num_workers=num_workers
+    )
 
     val_data = Text2TitleDataset(val_records, ft_model, max_words=max_words)
     val_loader = DataLoader(val_data, batch_size=batch_size, num_workers=num_workers)

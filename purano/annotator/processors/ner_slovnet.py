@@ -15,7 +15,8 @@ class NerSlovnetProcessor(Processor):
         self.model = NER.load(model_path)
         self.model.navec(navec)
 
-    def __call__(self,
+    def __call__(
+        self,
         docs: List[Document],
         infos: List[InfoPb],
         input_fields: List[str],

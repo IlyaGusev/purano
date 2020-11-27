@@ -1,5 +1,4 @@
 import csv
-from datetime import datetime
 from urllib.parse import urlsplit
 from dateutil.parser import parse as parse_datetime
 
@@ -7,7 +6,6 @@ from purano.util import parse_dir
 
 
 def parse_csv(file_name):
-    records = dict()
     with open(file_name, "r", encoding="utf-8") as r:
         header = next(r).strip().split(",")
         for line in r:

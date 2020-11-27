@@ -4,10 +4,9 @@ import copy
 from typing import List, Iterable
 
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
-import numpy as np
 
 from purano.models import Document, Info
-from purano.proto.info_pb2 import Info as InfoPb, EntitySpan as EntitySpanPb
+from purano.proto.info_pb2 import Info as InfoPb
 from purano.annotator.processors import Processor
 
 
@@ -21,7 +20,12 @@ class Annotator:
             self.processors[key] = Processor.by_name(item_type)(**item)
             print("'{}' processor loaded".format(key))
 
-    def process_by_batch(self, docs: Iterable[Document], batch_size: int, reannotate: bool):
+    def process_by_batch(
+        self,
+        docs: Iterable[Document],
+        batch_size: int,
+        reannotate: bool
+    ):
         docs_batch = []
         for doc in docs:
             docs_batch.append(doc)
@@ -34,13 +38,16 @@ class Annotator:
 
     def annotate_batch(self, docs_batch: List[Document], reannotate: bool):
         affected_doc_ids = tuple((doc.id for doc in docs_batch))
-        info_query = self.db_session.query(Info).filter(Info.document_id.in_(affected_doc_ids))
+        info_query = self.db_session.query(Info).filter(
+            Info.document_id.in_(affected_doc_ids)
+        )
         skip_ids = {info.document_id for info in info_query.all()}
         if skip_ids:
             if reannotate:
                 info_query.delete(synchronize_session=False)
                 self.db_session.commit()
-                print("Annotation wiil be changed for {} documents".format(len(skip_ids)))
+                n = len(skip_ids)
+                print("Annotation wiil be changed for {} documents".format(n))
             else:
                 docs_batch = [doc for doc in docs_batch if doc.id not in skip_ids]
                 print("Skipped {} documents".format(len(skip_ids)))
@@ -54,7 +61,7 @@ class Annotator:
             step = copy.deepcopy(self.config[step_name])
             processor_name = step.pop("processor")
             processor = self.processors.get(processor_name)
-            assert processor is not None, "No processor with name '{}'".format(processor_name)
+            assert processor, "No processor with name '{}'".format(processor_name)
             processor(docs_batch, infos_batch, **step)
             step_time[step_name] = time.time() - start_time
             start_time = time.time()
@@ -65,7 +72,8 @@ class Annotator:
         self.db_session.commit()
         save_time = time.time() - start_time
 
-        print("Annotated and saved {} documents, last dated {}".format(len(batch), docs_batch[-1].date))
+        print("Annotated and saved {} documents, last dated {}".format(
+            len(batch), docs_batch[-1].date))
         print("Processing time:")
         for p, t in step_time.items():
             print("{}: {:.2f} seconds".format(p, t))

@@ -9,6 +9,7 @@ from purano.readers.csv import parse_csv_dir
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TESTS_DATA_DIR = os.path.join(TESTS_DIR, "data")
 
+
 def assert_document(case, document):
     url = document.get("url")
     host = document.get("host")
@@ -47,6 +48,7 @@ class TestTgJsonlReader(unittest.TestCase):
             assert_document(self, document)
             documents.append(document)
         self.assertEqual(len(documents), 2)
+
 
 class TestCsvReader(unittest.TestCase):
     def test_parse_csv_dir(self):

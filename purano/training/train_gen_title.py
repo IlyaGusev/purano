@@ -36,8 +36,6 @@ def train_gen_title(
 
     max_tokens_text = config.pop("max_tokens_text", 196)
     max_tokens_title = config.pop("max_tokens_title", 48)
-    bos_token_id = config.pop("bos_token_id", tokenizer.bos_token_id)
-    eos_token_id = config.pop("eos_token_id", tokenizer.eos_token_id)
 
     train_dataset = GenTitleDataset(
         train_records,

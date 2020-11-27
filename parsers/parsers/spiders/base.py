@@ -1,5 +1,5 @@
 from urllib.parse import urlsplit
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import scrapy
 from scrapy.loader import ItemLoader
@@ -31,17 +31,17 @@ class NewsSpider(scrapy.Spider):
         base_edition = urlsplit(self.start_urls[0])[1]
         edition = urlsplit(url)[1]
 
-        l = ItemLoader(item=Document(), response=response)
-        l.add_value("url", url)
-        l.add_value("edition", "-" if edition == base_edition else edition)
-        l.add_xpath("title", self.config.title_path)
-        l.add_xpath("summary", self.config.summary_path)
-        l.add_xpath("date", self.config.date_path)
-        l.add_xpath("text", self.config.text_path)
-        l.add_xpath("topics", self.config.topics_path)
-        l.add_xpath("authors", self.config.authors_path)
+        loader = ItemLoader(item=Document(), response=response)
+        loader.add_value("url", url)
+        loader.add_value("edition", "-" if edition == base_edition else edition)
+        loader.add_xpath("title", self.config.title_path)
+        loader.add_xpath("summary", self.config.summary_path)
+        loader.add_xpath("date", self.config.date_path)
+        loader.add_xpath("text", self.config.text_path)
+        loader.add_xpath("topics", self.config.topics_path)
+        loader.add_xpath("authors", self.config.authors_path)
 
-        yield l.load_item()
+        yield loader.load_item()
 
     def process_title(self, title):
         return title.replace("\xa0", " ")
@@ -53,4 +53,3 @@ class NewsSpider(scrapy.Spider):
 
     def process_summary(self, summary):
         return summary.replace("\xa0", " ").strip()
-
