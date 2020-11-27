@@ -1,5 +1,4 @@
 import argparse
-import csv
 import json
 import os
 
@@ -34,7 +33,14 @@ def evaluate(
         json.dump(output, w, ensure_ascii=False, indent=4)
 
     for error in errors:
-        print(error["target"], error["prediction"], " ||| ", error["first_title"], " ||| ", error["second_title"])
+        print(
+            error["target"],
+            error["prediction"],
+            " ||| ",
+            error["first_title"],
+            " ||| ",
+            error["second_title"]
+        )
 
 
 if __name__ == "__main__":

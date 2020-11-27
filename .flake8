@@ -1,0 +1,8 @@
+[flake8]
+exclude =
+    purano/annotator/processors/__init__.py
+    purano/readers/__init__.py
+    purano/training/models/__init__.py
+    purano/training/datasets/__init__.py
+    purano/proto/info_pb2.py
+max-line-length = 100

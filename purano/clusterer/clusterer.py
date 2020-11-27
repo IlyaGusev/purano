@@ -1,13 +1,12 @@
 import json
 import itertools
 from typing import Optional
-from collections import defaultdict, Counter
+from collections import defaultdict
 
 import numpy as np
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
 from nltk.stem.snowball import SnowballStemmer
 from scipy.special import expit
-from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.cluster import AgglomerativeClustering, DBSCAN
 from sklearn.metrics import pairwise_distances
 
@@ -21,6 +20,7 @@ CLUSTERINGS = {
     "agglomerative": AgglomerativeClustering,
     "dbscan": DBSCAN
 }
+
 
 class Clusterer:
     def __init__(self, db_session, config_path: str):
@@ -63,11 +63,12 @@ class Clusterer:
         assert aggregation == "sum", "Unknown aggregation: {}".format(aggregation)
         return np.sum(vectors, axis=1)
 
-    def fetch_info(self,
-        start_date: Optional[str]=None,
-        end_date: Optional[str]=None,
-        sort_by_date: Optional[bool]=False,
-        nrows: Optional[int]=None
+    def fetch_info(
+        self,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        sort_by_date: Optional[bool] = False,
+        nrows: Optional[int] = None
     ):
         print("Fetching documents from database...")
         config = self.config["fetching"]
@@ -114,7 +115,6 @@ class Clusterer:
 
         self.vectors = np.array(vectors)
 
-
     def calc_distances(self):
         config = self.config["distances"]
         if self.distances is not None and config.get("cache_distances", False):
@@ -130,7 +130,11 @@ class Clusterer:
         distances = np.full((len(self.num2doc), len(self.num2doc)), max_distance, dtype=np.float64)
         for i, (keyword, doc_nums) in enumerate(self.keyword2nums.items()):
             vectors = self.vectors[doc_nums]
-            batch_distances = pairwise_distances(vectors, metric="cosine", n_jobs=1, force_all_finite=False)
+            batch_distances = pairwise_distances(
+                vectors,
+                metric="cosine",
+                n_jobs=1,
+                force_all_finite=False)
             for (l1, g1), (l2, g2) in itertools.product(enumerate(doc_nums), repeat=2):
                 distances[g1, g2] = batch_distances[l1, l2]
                 if fix_hosts and self.num2host[g1] == self.num2host[g2]:
@@ -142,7 +146,6 @@ class Clusterer:
                     distances[g1, g2] = min(max_distance, distances[g1, g2] * time_penalty)
         self.distances = distances
 
-
     def cluster(self):
         print("Running clustering algorithm...")
         config = self.config["clustering"]
@@ -150,7 +153,7 @@ class Clusterer:
         clustering = CLUSTERINGS[clustering_type](**config)
         labels = clustering.fit_predict(self.distances)
         max_label = max(labels)
-        for label, doc in zip (labels, self.num2doc):
+        for label, doc in zip(labels, self.num2doc):
             self.labels[doc.id] = label
             self.clusters[label].append(doc.id)
         noisy_docs = self.clusters.pop(-1, tuple())
@@ -210,6 +213,7 @@ class Clusterer:
         for label, cluster in self.clusters.items():
             if label == -1:
                 continue
-            clusters.append({"articles": [self.num2doc[self.id2num[doc_id]].url for doc_id in cluster]})
+            cluster_urls = [self.num2doc[self.id2num[doc_id]].url for doc_id in cluster]
+            clusters.append({"articles": cluster_urls})
         with open(output_file_name, "w") as w:
             json.dump(clusters, w, ensure_ascii=False, indent=4)

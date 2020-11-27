@@ -7,6 +7,7 @@
 import datetime
 import csv
 
+
 class ParsersPipeline(object):
     def open_spider(self, spider):
         self.file = open(spider.name + '.csv', 'w', encoding='utf8')

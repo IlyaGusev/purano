@@ -5,7 +5,6 @@ import os
 import neptune
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from pyinstrument import Profiler
 from hyperopt import Trials, fmin, hp, tpe
 
 from purano.clusterer.clusterer import Clusterer
@@ -19,7 +18,7 @@ SEARCH_SPACE = hp.pchoice(
         "linkage": hp.choice("linkage", ["average", "single"]),
         "n_clusters": None,
         "affinity": "precomputed"
-    }),(0.99, {
+    }), (0.99, {
         "type": "dbscan",
         "eps": hp.quniform("dbscan_eps", 0.01, 0.8, 0.01),
         "min_samples": hp.quniform("dbscan_min_samples", 1, 20, 1),
@@ -27,6 +26,7 @@ SEARCH_SPACE = hp.pchoice(
         "metric": "precomputed"
     })]
 )
+
 
 def fit_param(
     input_file: str,
@@ -85,7 +85,6 @@ def fit_param(
         neptune.log_metric("accuracy", accuracy)
         neptune.stop()
         return -accuracy
-
 
     trials = Trials()
     best = fmin(

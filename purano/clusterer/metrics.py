@@ -49,5 +49,3 @@ def calc_metrics(markup, url2record, labels):
 
     metrics = classification_report(targets, predictions, output_dict=True)
     return metrics, errors
-
-

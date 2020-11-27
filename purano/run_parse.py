@@ -7,13 +7,14 @@ from _jsonnet import evaluate_file as jsonnet_evaluate_file
 from fasttext import load_model as ft_load_model
 from pandas import DataFrame
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from pyonmttok import Tokenizer
 
 from purano.models import Document, Base
-from purano.readers import parse_tg_html_dir, parse_tg_jsonl_dir, parse_tg_jsonl, parse_csv_dir, parse_csv
+from purano.readers import parse_tg_html_dir, parse_tg_jsonl_dir, \
+    parse_tg_jsonl, parse_csv_dir, parse_csv
 
 FASTTEXT_LABEL_OFFSET = len("__label__")
+
 
 class DocumentsCleaner:
     def __init__(self, config_path):
@@ -81,9 +82,9 @@ def run_parse(
     if fmt == "html":
         parser = parse_tg_html_dir
     elif fmt == "jsonl" and os.path.isdir(inputs):
-        parser =  parse_tg_jsonl_dir
+        parser = parse_tg_jsonl_dir
     elif fmt == "jsonl" and os.path.isfile(inputs):
-        parser =  parse_tg_jsonl
+        parser = parse_tg_jsonl
     elif fmt == "csv" and os.path.isdir(inputs):
         parser = parse_csv_dir
     elif fmt == "csv" and os.path.isfile(inputs):

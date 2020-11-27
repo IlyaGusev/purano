@@ -26,7 +26,6 @@ flask >= 1.1.1
 nltk >= 3.2.5
 pyonmttok >= 1.22.1
 fasttext >= 0.9.1
-allennlp >= 1.1.0
 slovnet == 0.4.0
 pymorphy2[fast] == 0.9.1
 

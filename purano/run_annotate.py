@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from purano.models import Document
 from purano.annotator.annotator import Annotator
 
+
 def annotate(config: str,
              batch_size: int,
              input_file: str,

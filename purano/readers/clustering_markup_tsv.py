@@ -1,6 +1,7 @@
 import csv
 from collections import defaultdict
 
+
 def parse_clustering_markup_tsv(file_name):
     markup = defaultdict(dict)
     with open(file_name, "r") as r:
@@ -14,4 +15,3 @@ def parse_clustering_markup_tsv(file_name):
             quality = int(record["OUTPUT:quality"] == "OK")
             markup[(first_url, second_url)] = quality
     return markup
-

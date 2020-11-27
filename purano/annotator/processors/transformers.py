@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import numpy as np
@@ -9,6 +8,7 @@ from purano.annotator.processors import Processor
 from purano.models import Document
 from purano.proto.info_pb2 import Info as InfoPb
 
+
 @Processor.register("transformers")
 class TransformersProcessor(Processor):
     def __init__(self, pretrained_model_name_or_path: str):
@@ -16,7 +16,8 @@ class TransformersProcessor(Processor):
         self.model = AutoModel.from_pretrained(pretrained_model_name_or_path)
         self.model.eval()
 
-    def __call__(self,
+    def __call__(
+        self,
         docs: List[Document],
         infos: List[InfoPb],
         input_fields: List[str],
@@ -29,7 +30,8 @@ class TransformersProcessor(Processor):
         batch_mask = torch.zeros((len(docs), max_tokens_count), dtype=int)
         for doc_num, doc in enumerate(docs):
             sample = " ".join([getattr(doc, input_field) for input_field in input_fields])
-            inputs = self.tokenizer(sample,
+            inputs = self.tokenizer(
+                sample,
                 add_special_tokens=True,
                 max_length=max_tokens_count,
                 padding="max_length",
@@ -42,7 +44,12 @@ class TransformersProcessor(Processor):
             batch_input_ids[doc_num, :len(input_ids)] = input_ids
             batch_mask[doc_num, :len(attention_mask)] = attention_mask
         with torch.no_grad():
-            output = self.model(batch_input_ids, attention_mask=batch_mask, return_dict=True, output_hidden_states=True)
+            output = self.model(
+                batch_input_ids,
+                attention_mask=batch_mask,
+                return_dict=True,
+                output_hidden_states=True
+            )
         layer_embeddings = output.hidden_states[layer]
         embeddings = layer_embeddings.cpu().numpy()
         if aggregation == "mean||max":

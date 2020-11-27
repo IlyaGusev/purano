@@ -1,4 +1,5 @@
-# From https://github.com/ods-ai-ml4sg/proj_news_viz/blob/master/scraping/newsbot/newsbot/spiders/gazeta.py
+# From https://github.com/ods-ai-ml4sg/proj_news_viz/
+# blob/master/scraping/newsbot/newsbot/spiders/gazeta.py
 # Main contributor: https://github.com/Teoretic6
 
 from datetime import datetime
@@ -6,6 +7,7 @@ from datetime import datetime
 from scrapy import Request, Selector
 
 from parsers.spiders.base import NewsSpider, NewsSpiderConfig
+
 
 class GazetaSpider(NewsSpider):
     name = "gazeta"
@@ -57,7 +59,10 @@ class GazetaSpider(NewsSpider):
     def parse_document(self, response):
         for res in super().parse_document(response):
             # Remove advertisement blocks
-            ad_parts = ('\nРеклама\n', '\n.AdCentre_new_adv', ' AdfProxy.ssp', '\nset_resizeblock_handler')
+            ad_parts = (
+                '\nРеклама\n', '\n.AdCentre_new_adv',
+                ' AdfProxy.ssp', '\nset_resizeblock_handler'
+            )
             if "text" not in res:
                 return
             res['text'] = [x for x in res['text'] if x != '\n' and not x.startswith(ad_parts)]

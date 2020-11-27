@@ -1,10 +1,9 @@
-import os
-
 from dateutil.parser import parse as parse_datetime
 from urllib.parse import urlsplit
 from xml.etree.cElementTree import parse as parse_xml
 
 from purano.util import parse_dir
+
 
 def parse_tg_html(file_name):
     tree = parse_xml(file_name)

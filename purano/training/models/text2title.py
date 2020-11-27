@@ -45,7 +45,7 @@ class Text2TitleModel(LightningModule):
     def test_step(self, batch, batch_nb):
         return {'test_loss': self(*batch)}
 
-    def validation_epoch_end(self, outputs): 
+    def validation_epoch_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {'val_loss': avg_loss}
         return {'val_loss': avg_loss, 'progress_bar': tensorboard_logs}

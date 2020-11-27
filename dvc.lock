@@ -29,11 +29,11 @@ training_text2title_model:
   - path: models/fasttext/ru_vectors_v3.bin
     md5: 5f67e2397661798d4f5091423efbcfde
   - path: purano/training/datasets/text2title.py
-    md5: 5f8a4abb2a7f69d858307175f4ac5ef0
+    md5: dd00d1b63d7d5f0ffa53ca093ea8b75e
   - path: purano/training/models/text2title.py
-    md5: 34190266e06ff5da9cc184e543df9bfb
+    md5: efe7f78b61cc930304dbd511955c5160
   - path: purano/training/train_text2title.py
-    md5: 4e95c36bb270665b1a91e715bd90b210
+    md5: 49f159cda7045e0b7094414136d16790
   params:
     configs/training/text2title.jsonnet:
       batch_size: 64
@@ -44,9 +44,9 @@ training_text2title_model:
       patience: 4
   outs:
   - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 70aa1ac520ed976360da2a6f46c12d06
+    md5: ea7b700536bb4110f655b6876ad700c9
   - path: models/text2title/ru_ft_title_embedder.pt
-    md5: d521fa3c5fb23fcc9613ca03cdfe5e8a
+    md5: 1666c2611289aeac007c3034f0df3f82
 parse_0525:
   cmd: python3 -m purano.run_parse --inputs data/documents/ru_tg_0525.jsonl --fmt
     jsonl --output-file output/0525_parsed.db --cleaner-config configs/cleaner.jsonnet
@@ -54,7 +54,7 @@ parse_0525:
   - path: data/documents/ru_tg_0525.jsonl
     md5: 6713a796a0f2d50a7ec63a744b68eee1
   - path: purano/run_parse.py
-    md5: 6853d72844936f606d15b703f87b3a24
+    md5: 53670531f5844a2bffe3fa2eb0228669
   params:
     configs/cleaner.jsonnet:
       cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
@@ -144,3 +144,4 @@ evaluate_0525:
   - path: output/0525_metrics.json
     md5: 607162e50a235dd5e16193f97c4a985b
     size: 831
+

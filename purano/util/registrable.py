@@ -1,12 +1,14 @@
 # Based on https://github.com/allenai/allennlp/blob/master/allennlp/common/registrable.py
 from collections import defaultdict
 
+
 class Registrable:
     _registry = defaultdict(dict)
 
     @classmethod
     def register(cls, name):
         registry = Registrable._registry[cls]
+
         def add_subclass_to_registry(subclass):
             if name in registry:
                 message = (

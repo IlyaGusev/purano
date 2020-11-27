@@ -1,8 +1,10 @@
 import torch
 from torch.utils.data import Dataset
 
+
 class GenTitleDataset(Dataset):
-    def __init__(self,
+    def __init__(
+        self,
         records,
         tokenizer,
         max_tokens_text=200,
