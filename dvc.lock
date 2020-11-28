@@ -78,14 +78,25 @@ annotate_0525:
     --sort-by-date --output-file output/0525_annotated.db --input-file output/0525_parsed.db
   deps:
   - path: configs/annotator.jsonnet
-    md5: 687f17c97567d5d2376b35428bf47ab9
-    size: 3070
+    md5: 03951204ab33e4acf1592f3acb99892a
+    size: 3114
+  - path: models/fasttext
+    md5: cd7ec4a620037c4af9776bd5305367a9.dir
+    size: 369376324
+    nfiles: 2
+  - path: models/slovnet
+    md5: 0fcb8213409c80db9a19e5a48bf28fe5.dir
+    size: 29020160
+    nfiles: 2
   - path: models/text2title/ru_ft_text_embedder.pt
     md5: 0a32ebfd145e17fb118367e89f73194d
     size: 198777
   - path: models/text2title/ru_ft_title_embedder.pt
     md5: 20d0abde9993e3306da0f084f7c51810
     size: 198777
+  - path: models/tfidf/ru_idfs.txt
+    md5: 124440e90f2533842f8157b9af8f8a1e
+    size: 1069411
   - path: output/0525_parsed.db
     md5: 73806e15e4e41285075c3f5c4a6d8ef5
     size: 127447040
@@ -94,14 +105,14 @@ annotate_0525:
     size: 2433
   outs:
   - path: output/0525_annotated.db
-    md5: bb7ea6685f33d64f8d7a02bb6f1d0110
+    md5: 5c315dd43f12424e3ef5f5390a93d724
     size: 443076608
 clustering_0525:
   cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
     --output-file output/0525_clusters.json --input-file output/0525_annotated.db
   deps:
   - path: output/0525_annotated.db
-    md5: bb7ea6685f33d64f8d7a02bb6f1d0110
+    md5: 5c315dd43f12424e3ef5f5390a93d724
     size: 443076608
   - path: purano/clusterer/clusterer.py
     md5: 66459bb4ce34ccefab046593724b1210
@@ -129,8 +140,8 @@ clustering_0525:
       fetching.entities_key: title_slovnet_ner
   outs:
   - path: output/0525_clusters.json
-    md5: a54115bbd073b385772d9df711ad250e
-    size: 2218707
+    md5: 062049b02c5b7b7b60932c1548e21658
+    size: 2229839
 evaluate_0525:
   cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
     --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
@@ -143,12 +154,46 @@ evaluate_0525:
     md5: 87705bb85e7e4a96662a6af85350f063
     size: 46518961
   - path: output/0525_clusters.json
-    md5: a54115bbd073b385772d9df711ad250e
-    size: 2218707
+    md5: 062049b02c5b7b7b60932c1548e21658
+    size: 2229839
   - path: purano/run_evaluate.py
     md5: 182e7605ec01715792e9a9df9d845f11
     size: 1779
   outs:
   - path: output/0525_metrics.json
-    md5: 607162e50a235dd5e16193f97c4a985b
-    size: 831
+    md5: 01c1162cce3b2aff6c6b9926516dbe2c
+    size: 830
+annotate_light_0525:
+  cmd: python3 -m purano.run_annotate --config configs/annotator_light.jsonnet --reannotate
+    --sort-by-date --output-file output/0525_annotated_light.db --input-file output/0525_parsed.db
+  deps:
+  - path: configs/annotator_light.jsonnet
+    md5: 30a30114de3323a09eddbdcbc5c520c0
+    size: 2647
+  - path: models/fasttext
+    md5: cd7ec4a620037c4af9776bd5305367a9.dir
+    size: 369376324
+    nfiles: 2
+  - path: models/slovnet
+    md5: 0fcb8213409c80db9a19e5a48bf28fe5.dir
+    size: 29020160
+    nfiles: 2
+  - path: models/text2title/ru_ft_text_embedder.pt
+    md5: 0a32ebfd145e17fb118367e89f73194d
+    size: 198777
+  - path: models/text2title/ru_ft_title_embedder.pt
+    md5: 20d0abde9993e3306da0f084f7c51810
+    size: 198777
+  - path: models/tfidf/ru_idfs.txt
+    md5: 124440e90f2533842f8157b9af8f8a1e
+    size: 1069411
+  - path: output/0525_parsed.db
+    md5: 73806e15e4e41285075c3f5c4a6d8ef5
+    size: 127447040
+  - path: purano/run_annotate.py
+    md5: bf810130972e360bb118491b4515dba7
+    size: 2433
+  outs:
+  - path: output/0525_annotated_light.db
+    md5: a83d69ed95e79525bfd0903858d43ab3
+    size: 295157760

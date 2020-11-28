@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 import torch
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, logging
 
 from purano.annotator.processors import Processor
 from purano.models import Document
@@ -11,9 +11,14 @@ from purano.proto.info_pb2 import Info as InfoPb
 
 @Processor.register("transformers")
 class TransformersProcessor(Processor):
-    def __init__(self, pretrained_model_name_or_path: str):
+    def __init__(self, pretrained_model_name_or_path: str, log_info: bool = False, use_gpu: bool = False):
+        if log_info:
+            logging.set_verbosity_info()
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
         self.model = AutoModel.from_pretrained(pretrained_model_name_or_path)
+        self.use_gpu = use_gpu and torch.cuda.is_available()
+        if self.use_gpu:
+            self.model.cuda()
         self.model.eval()
 
     def __call__(
@@ -43,6 +48,9 @@ class TransformersProcessor(Processor):
             assert len(input_ids) == len(attention_mask) == max_tokens_count
             batch_input_ids[doc_num, :len(input_ids)] = input_ids
             batch_mask[doc_num, :len(attention_mask)] = attention_mask
+        if self.use_gpu:
+            batch_input_ids = batch_input_ids.cuda()
+            batch_mask = batch_mask.cuda()
         with torch.no_grad():
             output = self.model(
                 batch_input_ids,

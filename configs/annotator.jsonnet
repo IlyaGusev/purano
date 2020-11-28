@@ -35,7 +35,8 @@
         },
         "gen_title_encoder": {
             "type": "transformers",
-            "pretrained_model_name_or_path": "./models/gen_title_encoder"
+            "pretrained_model_name_or_path": "IlyaGusev/gen_title_tg_bottleneck_encoder",
+            "use_gpu": true
         }
     },
     "fasttext_title": {

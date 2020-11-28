@@ -13,7 +13,7 @@ before_script:
   - dvc pull
 
 script:
-  - dvc repro -f -s parse_0525 annotate_0525
+  - dvc repro -f -s parse_0525 annotate_light_0525
   - flake8
 
 deploy:
