@@ -11,7 +11,12 @@ from purano.proto.info_pb2 import Info as InfoPb
 
 @Processor.register("transformers")
 class TransformersProcessor(Processor):
-    def __init__(self, pretrained_model_name_or_path: str, log_info: bool = False, use_gpu: bool = False):
+    def __init__(
+        self,
+        pretrained_model_name_or_path: str,
+        log_info: bool = False,
+        use_gpu: bool = False
+    ):
         if log_info:
             logging.set_verbosity_info()
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
@@ -62,7 +67,7 @@ class TransformersProcessor(Processor):
         embeddings = layer_embeddings.cpu().numpy()
         if aggregation == "mean||max":
             embeddings = np.concatenate((embeddings.mean(axis=1), embeddings.max(axis=1)), axis=1)
-        elif aggregation ==  "first":
+        elif aggregation == "first":
             embeddings = embeddings[:, 0, :]
         else:
             assert False

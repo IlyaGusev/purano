@@ -3,6 +3,7 @@ from typing import Optional
 import torch
 from transformers import EncoderDecoderModel, PreTrainedModel, PretrainedConfig
 
+
 class BottleneckEncoderDecoderModel(EncoderDecoderModel):
     def __init__(
         self,
@@ -41,7 +42,8 @@ class BottleneckEncoderDecoderModel(EncoderDecoderModel):
         **kwargs,
     ):
         kwargs_encoder = {
-            argument[len("encoder_") :]: value for argument, value in kwargs.items() if argument.startswith("encoder_")
+            argument[len("encoder_"):]: value for argument, value in kwargs.items()
+            if argument.startswith("encoder_")
         }
         encoder_outputs = self.encoder(
             input_ids=input_ids,

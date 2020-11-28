@@ -54,13 +54,11 @@ def train_gen_title(
         max_tokens_title=max_tokens_title)
 
     print("Initializing model...")
-    if enable_bottleneck:
-        if from_pretrained:
-            model = BottleneckEncoderDecoderModel.from_pretrained(from_pretrained)
-        else:
-            model = BottleneckEncoderDecoderModel.from_encoder_decoder_pretrained(model_path, model_path)
+    cls = BottleneckEncoderDecoderModel if enable_bottleneck else EncoderDecoderModel
+    if from_pretrained:
+        model = cls.from_pretrained(from_pretrained)
     else:
-        model = EncoderDecoderModel.from_encoder_decoder_pretrained(model_path, model_path)
+        model = cls.from_encoder_decoder_pretrained(model_path, model_path)
 
     print("Training model...")
     batch_size = config.pop("batch_size", 8)
