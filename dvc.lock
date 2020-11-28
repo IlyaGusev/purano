@@ -24,16 +24,22 @@ training_text2title_model:
   deps:
   - path: data/documents/ru_tg_0511_0517.jsonl
     md5: da62375b0016e60e5542be00534c3a2c
+    size: 428991918
   - path: data/documents/ru_tg_1101_0510.jsonl.tar.gz
     md5: ec5d8322478b4b7d8a17ea4db4998559
+    size: 435058420
   - path: models/fasttext/ru_vectors_v3.bin
     md5: 5f67e2397661798d4f5091423efbcfde
+    size: 369376324
   - path: purano/training/datasets/text2title.py
     md5: dd00d1b63d7d5f0ffa53ca093ea8b75e
+    size: 1815
   - path: purano/training/models/text2title.py
     md5: efe7f78b61cc930304dbd511955c5160
+    size: 2314
   - path: purano/training/train_text2title.py
     md5: 49f159cda7045e0b7094414136d16790
+    size: 3528
   params:
     configs/training/text2title.jsonnet:
       batch_size: 64
@@ -44,9 +50,11 @@ training_text2title_model:
       patience: 4
   outs:
   - path: models/text2title/ru_ft_text_embedder.pt
-    md5: ea7b700536bb4110f655b6876ad700c9
+    md5: 0a32ebfd145e17fb118367e89f73194d
+    size: 198777
   - path: models/text2title/ru_ft_title_embedder.pt
-    md5: 1666c2611289aeac007c3034f0df3f82
+    md5: 20d0abde9993e3306da0f084f7c51810
+    size: 198777
 parse_0525:
   cmd: python3 -m purano.run_parse --inputs data/documents/ru_tg_0525.jsonl --fmt
     jsonl --output-file output/0525_parsed.db --cleaner-config configs/cleaner.jsonnet
@@ -73,34 +81,34 @@ annotate_0525:
     md5: 687f17c97567d5d2376b35428bf47ab9
     size: 3070
   - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 70aa1ac520ed976360da2a6f46c12d06
+    md5: 0a32ebfd145e17fb118367e89f73194d
     size: 198777
   - path: models/text2title/ru_ft_title_embedder.pt
-    md5: d521fa3c5fb23fcc9613ca03cdfe5e8a
+    md5: 20d0abde9993e3306da0f084f7c51810
     size: 198777
   - path: output/0525_parsed.db
     md5: 73806e15e4e41285075c3f5c4a6d8ef5
     size: 127447040
   - path: purano/run_annotate.py
-    md5: 054645ecf679834a8cad348d1dae1ba6
-    size: 2432
+    md5: bf810130972e360bb118491b4515dba7
+    size: 2433
   outs:
   - path: output/0525_annotated.db
-    md5: f616983044d25fd5a6ecc1950a326a38
+    md5: bb7ea6685f33d64f8d7a02bb6f1d0110
     size: 443076608
 clustering_0525:
   cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
     --output-file output/0525_clusters.json --input-file output/0525_annotated.db
   deps:
   - path: output/0525_annotated.db
-    md5: f616983044d25fd5a6ecc1950a326a38
+    md5: bb7ea6685f33d64f8d7a02bb6f1d0110
     size: 443076608
   - path: purano/clusterer/clusterer.py
-    md5: ad9d6088fd5b6029201528b0a1a9e8be
-    size: 8284
+    md5: 66459bb4ce34ccefab046593724b1210
+    size: 8347
   - path: purano/run_clustering.py
-    md5: 71eb27384b9bea718c73a4ebd51638f3
-    size: 1736
+    md5: 48c70248fb519542c044193b5488dac7
+    size: 1737
   params:
     configs/clusterer.jsonnet:
       clustering:
@@ -138,10 +146,9 @@ evaluate_0525:
     md5: a54115bbd073b385772d9df711ad250e
     size: 2218707
   - path: purano/run_evaluate.py
-    md5: fd99b9efbeb0872c8ec27d745c7b2caa
-    size: 1708
+    md5: 182e7605ec01715792e9a9df9d845f11
+    size: 1779
   outs:
   - path: output/0525_metrics.json
     md5: 607162e50a235dd5e16193f97c4a985b
     size: 831
-
