@@ -92,7 +92,7 @@ stages:
       --train-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --val-file data/documents/ru_tg_0511_0517.jsonl
       --output-title-model-path models/text2title/ru_ft_title_embedder.pt --output-text-model-path
       models/text2title/ru_ft_text_embedder.pt --train-sample-rate 0.2 --val-sample-rate
-      0.2
+      0.2 --neptune-project "ilya-gusev/purano"
     deps:
     - data/documents/ru_tg_0511_0517.jsonl
     - data/documents/ru_tg_1101_0510.jsonl.tar.gz

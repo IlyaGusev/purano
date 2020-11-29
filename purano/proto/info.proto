@@ -25,4 +25,5 @@ message Info {
     repeated string tfidf_keywords = 9;
     repeated double title_text_xlmroberta_embedding = 10;
     repeated double gen_title_embedding = 11;
+    repeated EntitySpan text_slovnet_ner = 12;
 }

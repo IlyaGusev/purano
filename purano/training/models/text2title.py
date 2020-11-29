@@ -37,23 +37,17 @@ class Text2TitleModel(LightningModule):
         return loss
 
     def training_step(self, batch, batch_nb):
-        return {'loss': self(*batch)}
+        train_loss = self(*batch)
+        self.log("train_loss", train_loss, prog_bar=True, logger=True)
+        return train_loss
 
     def validation_step(self, batch, batch_nb):
-        return {'val_loss': self(*batch)}
+        val_loss = self(*batch)
+        self.log("val_loss", val_loss, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_nb):
-        return {'test_loss': self(*batch)}
-
-    def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'val_loss': avg_loss}
-        return {'val_loss': avg_loss, 'progress_bar': tensorboard_logs}
-
-    def test_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'test_loss': avg_loss}
-        return {'test_loss': avg_loss, 'progress_bar': tensorboard_logs}
+        test_loss = self(*batch)
+        self.log("test_loss", test_loss, prog_bar=True, logger=True)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)

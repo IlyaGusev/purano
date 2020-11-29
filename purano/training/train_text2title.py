@@ -1,5 +1,7 @@
 import argparse
+import copy
 import json
+import os
 import random
 
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
@@ -7,6 +9,7 @@ from fasttext import load_model as ft_load_model
 from torch.utils.data import DataLoader, RandomSampler
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.loggers.neptune import NeptuneLogger
 
 from purano.readers.tg_jsonl import parse_tg_jsonl
 from purano.training.datasets import Text2TitleDataset
@@ -22,7 +25,8 @@ def train_text2title(
     val_sample_rate: float,
     output_title_model_path: str,
     output_text_model_path: str,
-    random_seed: int
+    random_seed: int,
+    neptune_project: str
 ):
     seed_everything(random_seed)
 
@@ -42,10 +46,9 @@ def train_text2title(
     val_records = [r for r in parse_tg_jsonl(val_file) if random.random() <= val_sample_rate]
 
     print("Building datasets...")
-    max_words = config.pop("max_words", 150)
-    batch_size = config.pop("batch_size", 64)
-    num_workers = config.pop("num_workers", 5)
-
+    max_words = config.get("max_words", 150)
+    batch_size = config.get("batch_size", 64)
+    num_workers = config.get("num_workers", 5)
     train_data = Text2TitleDataset(train_records, ft_model, max_words=max_words)
     train_sampler = RandomSampler(train_data)
     train_loader = DataLoader(
@@ -59,8 +62,8 @@ def train_text2title(
     val_loader = DataLoader(val_data, batch_size=batch_size, num_workers=num_workers)
 
     print("Training model...")
-    epochs = config.pop("epochs", 100)
-    patience = config.pop("patience", 4)
+    epochs = config.get("epochs", 100)
+    patience = config.get("patience", 4)
     model = Text2TitleModel()
     early_stop_callback = EarlyStopping(
         monitor="val_loss",
@@ -69,6 +72,21 @@ def train_text2title(
         verbose=True,
         mode="min"
     )
+    logger = False
+    neptune_api_token = os.getenv("NEPTUNE_API_TOKEN")
+    if neptune_project and neptune_api_token:
+        params = copy.copy(config)
+        params["train_sample_rate"] = train_sample_rate
+        params["val_sample_rate"] = val_sample_rate
+        params["train_file"] = train_file
+        params["val_file"] = val_file
+        logger = NeptuneLogger(
+            api_key=neptune_api_token,
+            project_name=neptune_project,
+            experiment_name="Fasttext text2title",
+            tags=["training", "pytorch-lightning", "text2title"],
+            params=params
+        )
     trainer = Trainer(
         gpus=0,
         checkpoint_callback=False,
@@ -77,7 +95,8 @@ def train_text2title(
         callbacks=[early_stop_callback],
         val_check_interval=1.0,
         progress_bar_refresh_rate=100,
-        deterministic=True
+        deterministic=True,
+        logger=logger
     )
     trainer.fit(model, train_loader, val_loader)
     model.save(output_title_model_path, output_text_model_path)
@@ -95,6 +114,7 @@ if __name__ == "__main__":
     parser.add_argument("--output-text-model-path", type=str,
                         default="models/text2title/ru_ft_text_embedder.pt")
     parser.add_argument("--random-seed", type=int, default=42)
+    parser.add_argument("--neptune-project", type=str, default=None)
 
     args = parser.parse_args()
     train_text2title(**vars(args))

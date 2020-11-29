@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     static_dir = os.path.abspath("purano/viewer/static")
     templates_dir = os.path.abspath("purano/viewer/templates")
-    db_path = os.path.abspath("news.db")
+    db_path = os.path.abspath("output/0525_annotated.db")
 
     app = Flask(__name__, template_folder=templates_dir, static_folder=static_dir)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///{}".format(db_path)
