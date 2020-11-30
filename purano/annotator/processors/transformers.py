@@ -36,23 +36,20 @@ class TransformersProcessor(Processor):
         layer: int,
         aggregation: str = "mean||max"
     ):
-        batch_input_ids = torch.zeros((len(docs), max_tokens_count), dtype=int)
-        batch_mask = torch.zeros((len(docs), max_tokens_count), dtype=int)
+        samples = []
         for doc_num, doc in enumerate(docs):
-            sample = " ".join([getattr(doc, input_field) for input_field in input_fields])
-            inputs = self.tokenizer(
-                sample,
-                add_special_tokens=True,
-                max_length=max_tokens_count,
-                padding="max_length",
-                truncation=True,
-                return_tensors='pt'
-            )
-            input_ids = inputs["input_ids"][0]
-            attention_mask = inputs["attention_mask"][0]
-            assert len(input_ids) == len(attention_mask) == max_tokens_count
-            batch_input_ids[doc_num, :len(input_ids)] = input_ids
-            batch_mask[doc_num, :len(attention_mask)] = attention_mask
+            samples.append(" ".join([getattr(doc, input_field) for input_field in input_fields]))
+        inputs = self.tokenizer(
+            samples,
+            add_special_tokens=True,
+            max_length=max_tokens_count,
+            padding="max_length",
+            truncation=True,
+            return_tensors='pt'
+        )
+        batch_input_ids = inputs["input_ids"]
+        batch_mask = inputs["attention_mask"]
+        assert len(batch_input_ids[0]) == len(batch_mask[0]) == max_tokens_count
         if self.use_gpu:
             batch_input_ids = batch_input_ids.cuda()
             batch_mask = batch_mask.cuda()
