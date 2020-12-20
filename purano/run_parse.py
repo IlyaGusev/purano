@@ -109,7 +109,7 @@ def run_parse(
     df = DataFrame(documents)
     df = df[save_fields]
     df = df[(~df["text"].isnull() & ~df["title"].isnull())]
-    df.drop_duplicates(subset=["title", "text"], keep='last', inplace=True)
+    df.drop_duplicates(subset=["url", "title", "text"], keep='last', inplace=True)
     df.drop_duplicates(subset=["url"], keep='last', inplace=True)
     if start_date:
         df = df[df["date"] >= start_date]

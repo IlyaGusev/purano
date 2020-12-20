@@ -70,6 +70,7 @@ stages:
     - data/documents/ru_tg_0525.jsonl
     - data/markup/ru_clustering_0525.tsv
     - output/0525_clusters.json
+    - purano/clusterer/metrics.py
     - purano/run_evaluate.py
     metrics:
     - output/0525_metrics.json:
