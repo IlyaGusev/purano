@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='info.proto',
   package='info',
   syntax='proto3',
-  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"m\n\nEntitySpan\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x04\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x04\x12!\n\x03tag\x18\x03 \x01(\x0e\x32\x14.info.EntitySpan.Tag\" \n\x03Tag\x12\x07\n\x03LOC\x10\x00\x12\x07\n\x03PER\x10\x01\x12\x07\n\x03ORG\x10\x02\"\xba\x03\n\x04Info\x12 \n\x18title_fasttext_embedding\x18\x01 \x03(\x01\x12\x1f\n\x17text_fasttext_embedding\x18\x02 \x03(\x01\x12%\n\x1dtitle_text_fasttext_embedding\x18\x03 \x03(\x01\x12\"\n\x1atitle_xlmroberta_embedding\x18\x04 \x03(\x01\x12\x1c\n\x14title_elmo_embedding\x18\x05 \x03(\x01\x12+\n\x11title_slovnet_ner\x18\x06 \x03(\x0b\x32\x10.info.EntitySpan\x12\'\n\x1ftitle_linear_fasttext_embedding\x18\x07 \x03(\x01\x12&\n\x1etext_linear_fasttext_embedding\x18\x08 \x03(\x01\x12\x16\n\x0etfidf_keywords\x18\t \x03(\t\x12\'\n\x1ftitle_text_xlmroberta_embedding\x18\n \x03(\x01\x12\x1b\n\x13gen_title_embedding\x18\x0b \x03(\x01\x12*\n\x10text_slovnet_ner\x18\x0c \x03(\x0b\x32\x10.info.EntitySpanb\x06proto3')
+  serialized_pb=_b('\n\ninfo.proto\x12\x04info\"m\n\nEntitySpan\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x04\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x04\x12!\n\x03tag\x18\x03 \x01(\x0e\x32\x14.info.EntitySpan.Tag\" \n\x03Tag\x12\x07\n\x03LOC\x10\x00\x12\x07\n\x03PER\x10\x01\x12\x07\n\x03ORG\x10\x02\"\xd3\x03\n\x04Info\x12 \n\x18title_fasttext_embedding\x18\x01 \x03(\x01\x12\x1f\n\x17text_fasttext_embedding\x18\x02 \x03(\x01\x12%\n\x1dtitle_text_fasttext_embedding\x18\x03 \x03(\x01\x12\"\n\x1atitle_xlmroberta_embedding\x18\x04 \x03(\x01\x12\x1c\n\x14title_elmo_embedding\x18\x05 \x03(\x01\x12+\n\x11title_slovnet_ner\x18\x06 \x03(\x0b\x32\x10.info.EntitySpan\x12\'\n\x1ftitle_linear_fasttext_embedding\x18\x07 \x03(\x01\x12&\n\x1etext_linear_fasttext_embedding\x18\x08 \x03(\x01\x12\x16\n\x0etfidf_keywords\x18\t \x03(\t\x12\'\n\x1ftitle_text_xlmroberta_embedding\x18\n \x03(\x01\x12\x1b\n\x13gen_title_embedding\x18\x0b \x03(\x01\x12*\n\x10text_slovnet_ner\x18\x0c \x03(\x0b\x32\x10.info.EntitySpan\x12\x17\n\x0ftfidf_embedding\x18\r \x03(\x01\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -189,6 +189,13 @@ _INFO = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='tfidf_embedding', full_name='info.Info.tfidf_embedding', index=12,
+      number=13, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -202,7 +209,7 @@ _INFO = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=132,
-  serialized_end=574,
+  serialized_end=599,
 )
 
 _ENTITYSPAN.fields_by_name['tag'].enum_type = _ENTITYSPAN_TAG

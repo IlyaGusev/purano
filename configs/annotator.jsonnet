@@ -4,9 +4,10 @@
         "fasttext_title_text",
         "fasttext_title_linear",
         "fasttext_text_linear",
-        "gen_title_encoder",
         "ner_slovnet_title",
-        "tfidf_keywords"
+        "gen_title_encoder",
+        "tfidf_keywords",
+        "tfidf"
     ],
     "processors": {
         "fasttext": {
@@ -32,6 +33,11 @@
             "type": "tfidf_keywords",
             "idfs_vocabulary": "./models/tfidf/ru_idfs.txt",
             "top_k": 15
+        },
+        "tfidf": {
+            "type": "tfidf",
+            "idfs_vocabulary": "./models/tfidf/ru_idfs.txt",
+            "svd_torch_model_path": "./models/tfidf/svd_matrix.pt"
         },
         "gen_title_encoder": {
             "type": "transformers",
@@ -80,6 +86,11 @@
         "processor": "tfidf_keywords",
         "input_fields": ["patched_title", "patched_text"],
         "output_field": "tfidf_keywords"
+    },
+    "tfidf": {
+        "processor": "tfidf",
+        "input_fields": ["patched_title", "patched_text"],
+        "output_field": "tfidf_embedding"
     },
     "gen_title_encoder": {
         "processor": "gen_title_encoder",

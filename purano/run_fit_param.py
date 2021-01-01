@@ -12,13 +12,13 @@ from purano.clusterer.metrics import calc_metrics
 from purano.readers import parse_tg_jsonl, parse_clustering_markup_tsv
 
 SEARCH_SPACE = hp.pchoice(
-    "clustering_type", [(0.01, {
+    "clustering_type", [(0.999, {
         "type": "agglomerative",
-        "distance_threshold": hp.quniform("distance_threshold", 0.0, 0.8, 0.01),
-        "linkage": hp.choice("linkage", ["average", "single"]),
+        "distance_threshold": hp.quniform("distance_threshold", 0.01, 0.95, 0.01),
+        "linkage": "average",
         "n_clusters": None,
         "affinity": "precomputed"
-    }), (0.99, {
+    }), (0.001, {
         "type": "dbscan",
         "eps": hp.quniform("dbscan_eps", 0.01, 0.8, 0.01),
         "min_samples": hp.quniform("dbscan_min_samples", 1, 20, 1),
@@ -37,8 +37,8 @@ def fit_param(
     config: str,
     clustering_markup_tsv: str,
     original_jsonl: str,
-    param_to_change: str,
-    neptune_project: str
+    neptune_project: str,
+    neptune_tags: str
 ):
     assert input_file.endswith(".db")
     assert os.path.isfile(clustering_markup_tsv)
@@ -47,6 +47,8 @@ def fit_param(
     assert original_jsonl.endswith(".jsonl")
     assert os.path.isfile(config)
     assert config.endswith(".jsonnet")
+    assert neptune_tags
+    neptune_tags = neptune_tags.split(",")
 
     neptune_api_token = os.getenv("NEPTUNE_API_TOKEN")
 
@@ -71,8 +73,12 @@ def fit_param(
     config_copy = copy.deepcopy(clusterer.config)
 
     def calc_accuracy(params):
-        neptune.create_experiment(name="clustering", params=params,
-                                  upload_source_files=['configs/*.jsonnet'])
+        neptune.create_experiment(
+            name="clustering",
+            params=params,
+            upload_source_files=['configs/*.jsonnet'],
+            tags=neptune_tags
+        )
         clusterer.config = copy.deepcopy(config_copy)
         clusterer.config["clustering"] = params
         clusterer.config["distances"]["cache_distances"] = True
@@ -82,7 +88,11 @@ def fit_param(
         clusterer.reset_clusters()
         metrics, _ = calc_metrics(markup, url2record, labels)
         accuracy = metrics["accuracy"]
+        f1_score_0 = metrics["0"]["f1-score"]
+        f1_score_1 = metrics["1"]["f1-score"]
         neptune.log_metric("accuracy", accuracy)
+        neptune.log_metric("f1_score_0", f1_score_0)
+        neptune.log_metric("f1_score_1", f1_score_1)
         neptune.stop()
         return -accuracy
 
@@ -99,7 +109,7 @@ def fit_param(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input-file", type=str, default="output/train_annotated.db")
+    parser.add_argument("--input-file", type=str, default="output/0525_annotated.db")
     parser.add_argument("--nrows", type=int, default=None)
     parser.add_argument("--sort-by-date", default=False,  action='store_true')
     parser.add_argument("--start-date", type=str, default=None)
@@ -107,8 +117,8 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--clustering-markup-tsv", type=str, required=True)
     parser.add_argument("--original-jsonl", type=str, required=True)
-    parser.add_argument("--param-to-change", type=str, required=True)
     parser.add_argument("--neptune-project", type=str, required=True)
+    parser.add_argument("--neptune-tags", type=str, required=True)
 
     args = parser.parse_args()
     fit_param(**vars(args))

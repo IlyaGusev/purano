@@ -1,10 +1,9 @@
 from typing import List
-from collections import Counter
 
 from purano.annotator.processors import Processor
 from purano.models import Document
 from purano.proto.info_pb2 import Info as InfoPb
-from purano.util import tokenize_to_lemmas
+from purano.training.models.tfidf import load_idfs, get_tfidf_vector
 
 
 @Processor.register("tfidf_keywords")
@@ -15,11 +14,10 @@ class TfIdfKeywordsProcessor(Processor):
         top_k: int
     ):
         self.top_k = top_k
-        self.idfs = dict()
-        with open(idfs_vocabulary, "r") as r:
-            for line in r:
-                word, idf = line.strip().split("\t")
-                self.idfs[word] = float(idf)
+        word2idf, word2idx = load_idfs(idfs_vocabulary)
+        self.word2idf = word2idf
+        self.word2idx = word2idx
+        self.idx2word = {idx: word for word, idx in self.word2idx.items()}
 
     def __call__(
         self,
@@ -29,17 +27,9 @@ class TfIdfKeywordsProcessor(Processor):
         output_field: str,
     ):
         for doc, info in zip(docs, infos):
-            tfidfs = []
-            tokens = [
-                token for field in input_fields
-                for token in tokenize_to_lemmas(getattr(doc, field))
-            ]
-            freqs = Counter(tokens)
-            tfs = {token: float(f) / len(tokens) for token, f in freqs.items()}
-            for token, tf in tfs.items():
-                idf = self.idfs.get(token, 0.0)
-                tfidf = tf * idf
-                tfidfs.append((tfidf, token))
+            sample = " ".join([getattr(doc, field) for field in input_fields])
+            data, indices = get_tfidf_vector(sample, self.word2idf, self.word2idx)
+            tfidfs = [(tfidf, self.idx2word[index]) for tfidf, index in zip(data, indices)]
             tfidfs.sort()
             keywords = [token for tfidf, token in tfidfs[-self.top_k:]]
             getattr(info, output_field).extend(keywords)

@@ -77,17 +77,20 @@ stages:
         cache: false
   training_tfidf_model:
     cmd: python3 -m purano.training.train_tfidf --config-file configs/training/tfidf.jsonnet
-      --input-file data/documents/ru_tg_0511_0517.jsonl --output-file models/tfidf/ru_idfs.txt
+      --input-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --output-file models/tfidf/ru_idfs.txt
+      --svd-matrix-file models/tfidf/svd_matrix.pt
     deps:
-    - data/documents/ru_tg_0511_0517.jsonl
+    - data/documents/ru_tg_1101_0510.jsonl.tar.gz
     - purano/training/models/tfidf.py
     - purano/training/train_tfidf.py
     params:
     - configs/training/tfidf.jsonnet:
-      - max_df
-      - min_df
+      - building.max_df
+      - building.min_df
+      - svd_dim
     outs:
     - models/tfidf/ru_idfs.txt
+    - models/tfidf/svd_matrix.pt
   training_text2title_model:
     cmd: python3 -m purano.training.train_text2title --config-file configs/training/text2title.jsonnet
       --train-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --val-file data/documents/ru_tg_0511_0517.jsonl
