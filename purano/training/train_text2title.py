@@ -11,7 +11,7 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers.neptune import NeptuneLogger
 
-from purano.readers.tg_jsonl import parse_tg_jsonl
+from purano.io import read_tg_jsonl
 from purano.training.datasets import Text2TitleDataset
 from purano.training.models import Text2TitleModel
 from purano.util import get_true_file
@@ -42,8 +42,8 @@ def train_text2title(
     ft_model = ft_load_model(ft_model_path)
 
     print("Fetching data...")
-    train_records = [r for r in parse_tg_jsonl(train_file) if random.random() <= train_sample_rate]
-    val_records = [r for r in parse_tg_jsonl(val_file) if random.random() <= val_sample_rate]
+    train_records = [r for r in read_tg_jsonl(train_file) if random.random() <= train_sample_rate]
+    val_records = [r for r in read_tg_jsonl(val_file) if random.random() <= val_sample_rate]
 
     print("Building datasets...")
     max_words = config.get("max_words", 150)

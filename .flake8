@@ -1,8 +1,10 @@
 [flake8]
 exclude =
     purano/annotator/processors/__init__.py
-    purano/readers/__init__.py
+    purano/io/__init__.py
+    purano/util/__init__.py
     purano/training/models/__init__.py
     purano/training/datasets/__init__.py
     purano/proto/info_pb2.py
+    competition/scoring_program/evaluate.py
 max-line-length = 100

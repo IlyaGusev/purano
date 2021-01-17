@@ -2,10 +2,10 @@ from dateutil.parser import parse as parse_datetime
 from urllib.parse import urlsplit
 from xml.etree.cElementTree import parse as parse_xml
 
-from purano.util import parse_dir
+from purano.io.parse_dir import parse_dir
 
 
-def parse_tg_html(file_name):
+def read_tg_html(file_name):
     tree = parse_xml(file_name)
     root = tree.getroot()
     head_element = root.find("head")
@@ -59,6 +59,6 @@ def parse_tg_html(file_name):
     yield doc
 
 
-def parse_tg_html_dir(directory):
-    for record in parse_dir(directory, ".html", parse_tg_html, print_interval=1000):
+def read_tg_html_dir(directory):
+    for record in parse_dir(directory, ".html", read_tg_html, print_interval=1000):
         yield record

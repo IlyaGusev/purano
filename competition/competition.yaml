@@ -9,7 +9,7 @@ html:
     evaluation: evaluation.html
     terms: terms_and_conditions.html
     data: data.html
-    Dates: dates.html
+    Timeline: timeline.html
     Organizers: organizers.html
     Baselines: baselines.html
 phases:

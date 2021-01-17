@@ -9,7 +9,7 @@ from hyperopt import Trials, fmin, hp, tpe
 
 from purano.clusterer.clusterer import Clusterer
 from purano.clusterer.metrics import calc_metrics
-from purano.readers import parse_tg_jsonl, parse_clustering_markup_tsv
+from purano.io import parse_tg_jsonl, parse_clustering_markup_tsv
 
 SEARCH_SPACE = hp.pchoice(
     "clustering_type", [(0.999, {

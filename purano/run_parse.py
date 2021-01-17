@@ -10,8 +10,8 @@ from sqlalchemy import create_engine
 from pyonmttok import Tokenizer
 
 from purano.models import Document, Base
-from purano.readers import parse_tg_html_dir, parse_tg_jsonl_dir, \
-    parse_tg_jsonl, parse_csv_dir, parse_csv
+from purano.io import read_tg_html_dir, read_tg_jsonl_dir, \
+    read_tg_jsonl, read_parsers_csv_dir, read_parsers_csv
 
 FASTTEXT_LABEL_OFFSET = len("__label__")
 
@@ -80,15 +80,15 @@ def run_parse(
     # Choose right parser
     parser = None
     if fmt == "html":
-        parser = parse_tg_html_dir
+        parser = read_tg_html_dir
     elif fmt == "jsonl" and os.path.isdir(inputs):
-        parser = parse_tg_jsonl_dir
+        parser = read_tg_jsonl_dir
     elif fmt == "jsonl" and os.path.isfile(inputs):
-        parser = parse_tg_jsonl
+        parser = read_tg_jsonl
     elif fmt == "csv" and os.path.isdir(inputs):
-        parser = parse_csv_dir
+        parser = read_parsers_csv_dir
     elif fmt == "csv" and os.path.isfile(inputs):
-        parser = parse_csv
+        parser = read_parsers_csv
     else:
         assert False, "Parser for format {} is not set".format(fmt)
 

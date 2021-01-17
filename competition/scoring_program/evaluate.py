@@ -27,14 +27,14 @@ def evaluate(input_dir, output_dir):
     answers = dict()
     with open(truth_filename, "r") as truth:
         for line in truth:
-            sample_id, answer = line.strip().split("\t")
-            answers[sample_id] = answer
+            first_url, second_url, answer = line.strip().split("\t")
+            answers[(first_url, second_url)] = answer
 
     predictions = dict()
     with open(submission_filename, "r") as submission:
         for line in submission:
-            sample_id, answer = line.strip().split("\t")
-            predictions[sample_id] = answer
+            first_url, second_url, answer = line.strip().split("\t")
+            predictions[(first_url, second_url)] = answer
 
     p_size = len(predictions)
     a_size = len(answers)
@@ -42,6 +42,7 @@ def evaluate(input_dir, output_dir):
 
     correct_count = 0
     for sample_id, answer in answers.items():
+        assert sample_id in predictions, "{} is missing".format(sample_id)
         prediction = predictions[sample_id]
         if prediction == answer:
             correct_count += 1

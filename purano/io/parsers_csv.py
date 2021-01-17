@@ -2,10 +2,10 @@ import csv
 from urllib.parse import urlsplit
 from dateutil.parser import parse as parse_datetime
 
-from purano.util import parse_dir
+from purano.io.parse_dir import parse_dir
 
 
-def parse_csv(file_name):
+def read_parsers_csv(file_name):
     with open(file_name, "r", encoding="utf-8") as r:
         header = next(r).strip().split(",")
         for line in r:
@@ -23,6 +23,6 @@ def parse_csv(file_name):
             yield record
 
 
-def parse_csv_dir(directory):
-    for record in parse_dir(directory, ".csv", parse_csv, print_interval=1000):
+def read_parsers_csv_dir(directory):
+    for record in parse_dir(directory, ".csv", read_parsers_csv, print_interval=1000):
         yield record

@@ -7,7 +7,7 @@ from scipy.sparse import csr_matrix
 import torch
 from tqdm import tqdm
 
-from purano.readers.tg_jsonl import parse_tg_jsonl
+from purano.io import read_tg_jsonl
 from purano.training.models.tfidf import build_idf_vocabulary, get_tfidf_vector, SVDEmbedder
 from purano.util import get_true_file
 
@@ -24,7 +24,7 @@ def train_tfidf(
 
     print("Parsing input data...")
     corpus = []
-    for record in tqdm(parse_tg_jsonl(input_file)):
+    for record in tqdm(read_tg_jsonl(input_file)):
         corpus.append(record.pop("title") + " " + record.pop("text"))
 
     idfs = build_idf_vocabulary(corpus, **config.pop("building"))

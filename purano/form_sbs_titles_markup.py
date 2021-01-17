@@ -28,12 +28,13 @@ def main(
         existing_urls = {(r["first_url"], r["second_url"]) for r in current_markup}
         existing_urls |= {(r["second_url"], r["first_url"]) for r in current_markup}
 
-    #honey_records = read_markup_tsv(honey_tsv)
+    # honey_records = read_markup_tsv(honey_tsv)
 
     with open(threads_json, "r") as r:
         threads = json.load(r)
 
     markup = []
+
     def add_key(key, context):
         if key in existing_urls:
             return
@@ -71,12 +72,12 @@ def main(
             markup_record["context_title_{}".format(i)] = context_title
         final_markup.append(markup_record)
 
-    #markup_len = len(honey_records) * 9
+    # markup_len = len(honey_records) * 9
     markup_len = 1000
     random.shuffle(final_markup)
     final_markup = final_markup[:markup_len]
-    #final_markup = markup[:markup_len] + honey_records
-    #random.shuffle(final_markup)
+    # final_markup = markup[:markup_len] + honey_records
+    # random.shuffle(final_markup)
     print(len(final_markup))
 
     write_markup_tsv(final_markup, output_tsv, res_key="res")

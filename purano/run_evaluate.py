@@ -2,8 +2,8 @@ import argparse
 import json
 import os
 
-from purano.clusterer.metrics import parse_threads_json, calc_metrics
-from purano.readers import parse_tg_jsonl, parse_clustering_markup_tsv
+from purano.clusterer.metrics import calc_metrics
+from purano.io import read_tg_jsonl, read_markup_tsv, read_threads_json
 
 
 def evaluate(
@@ -21,9 +21,9 @@ def evaluate(
     assert threads_json.endswith(".json")
     assert output_json.endswith(".json")
 
-    markup = parse_clustering_markup_tsv(clustering_markup_tsv)
-    url2record = {r["url"]: r for r in parse_tg_jsonl(original_jsonl)}
-    labels = parse_threads_json(threads_json)
+    markup = read_markup_tsv(clustering_markup_tsv)
+    url2record = {r["url"]: r for r in read_tg_jsonl(original_jsonl)}
+    labels = read_threads_json(threads_json)
     metrics, errors = calc_metrics(markup, url2record, labels)
 
     with open(output_json, "w") as w:

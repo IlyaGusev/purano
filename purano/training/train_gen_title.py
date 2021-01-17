@@ -5,7 +5,7 @@ import random
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
 from transformers import AutoTokenizer, EncoderDecoderModel, Trainer, TrainingArguments, logging
 
-from purano.readers.tg_jsonl import parse_tg_jsonl
+from purano.io import read_tg_jsonl
 from purano.training.datasets import GenTitleDataset
 from purano.training.models import BottleneckEncoderDecoderModel
 from purano.util import get_true_file
@@ -31,8 +31,8 @@ def train_gen_title(
     config = json.loads(jsonnet_evaluate_file(config_file))
 
     print("Fetching data...")
-    train_records = [r for r in parse_tg_jsonl(train_file) if random.random() <= train_sample_rate]
-    val_records = [r for r in parse_tg_jsonl(val_file) if random.random() <= val_sample_rate]
+    train_records = [r for r in read_tg_jsonl(train_file) if random.random() <= train_sample_rate]
+    val_records = [r for r in read_tg_jsonl(val_file) if random.random() <= val_sample_rate]
 
     print("Building datasets...")
     model_path = config.pop("model_path")

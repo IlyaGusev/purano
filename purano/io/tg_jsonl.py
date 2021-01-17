@@ -2,10 +2,10 @@ import json
 from datetime import datetime
 from urllib.parse import urlsplit
 
-from purano.util import parse_dir
+from purano.io.parse_dir import parse_dir
 
 
-def parse_tg_jsonl(file_name):
+def read_tg_jsonl(file_name):
     with open(file_name, "r", encoding="utf-8") as f:
         for line in f:
             record = json.loads(line)
@@ -19,6 +19,6 @@ def parse_tg_jsonl(file_name):
             yield record
 
 
-def parse_tg_jsonl_dir(directory):
-    for record in parse_dir(directory, ".jsonl", parse_tg_jsonl):
+def read_tg_jsonl_dir(directory):
+    for record in parse_dir(directory, ".jsonl", read_tg_jsonl):
         yield record

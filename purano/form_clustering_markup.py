@@ -2,7 +2,7 @@ import argparse
 import json
 import random
 
-from purano.util.markup import read_markup_tsv, write_markup_tsv
+from purano.io import read_markup_tsv, write_markup_tsv
 
 
 def main(
@@ -33,6 +33,7 @@ def main(
         random.shuffle(threads)
 
     markup_keys = []
+
     def add_key(key):
         if key in existing_urls:
             return
