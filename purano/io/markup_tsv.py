@@ -8,6 +8,10 @@ def read_markup_tsv(file_name, clean_header=True):
             header = tuple((h.split(":")[-1] for h in header))
         reader = csv.reader(r, delimiter='\t', quotechar='"')
         records = [dict(zip(header, row)) for row in reader]
+        clean_fields = ("first_title", "second_title", "first_text", "second_text")
+        for record in records:
+            for field in clean_fields:
+                record[field] = record.pop(field).strip().replace("\xa0", " ")
     return records
 
 
