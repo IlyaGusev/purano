@@ -16,6 +16,8 @@ def read_tg_jsonl(file_name):
             record["date"] = datetime.utcfromtimestamp(timestamp)
             if "host" not in record:
                 record["host"] = urlsplit(record["url"]).netloc
+            record["text"] = record.pop("text").strip().replace("\xa0", " ")
+            record["title"] = record.pop("title").strip().replace("\xa0", " ")
             yield record
 
 
