@@ -26,6 +26,7 @@ stages:
     - models/text2title/ru_ft_text_embedder.pt
     - models/text2title/ru_ft_title_embedder.pt
     - models/tfidf/ru_idfs.txt
+    - models/tfidf/svd_matrix.pt
     outs:
     - output/0525_annotated.db
   annotate_light_0525:
@@ -40,6 +41,7 @@ stages:
     - models/text2title/ru_ft_text_embedder.pt
     - models/text2title/ru_ft_title_embedder.pt
     - models/tfidf/ru_idfs.txt
+    - models/tfidf/svd_matrix.pt
     outs:
     - output/0525_annotated_light.db
   clustering_0525:
