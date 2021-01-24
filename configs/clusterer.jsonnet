@@ -3,7 +3,7 @@
         "type": "agglomerative",
         "affinity": "precomputed",
         "linkage": "average",
-        "distance_threshold": 0.4,
+        "distance_threshold": 0.37,
         "n_clusters": null
     },
     "fetching": {

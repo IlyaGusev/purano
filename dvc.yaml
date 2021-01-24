@@ -5,6 +5,7 @@ stages:
     deps:
     - data/documents/ru_tg_0525.jsonl
     - purano/run_parse.py
+    - purano/io/tg_jsonl.py
     params:
     - configs/cleaner.jsonnet:
       - cat_detect_model_path
