@@ -74,7 +74,7 @@ def main(
     random.shuffle(final_markup)
     print(len(final_markup))
 
-    write_markup_tsv(final_markup, output_tsv)
+    write_markup_tsv(final_markup, output_tsv, input_prefix="INPUT:", res_prefix="GOLDEN:")
 
 
 if __name__ == "__main__":

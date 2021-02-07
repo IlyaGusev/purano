@@ -104,6 +104,8 @@ class Clusterer:
                 self.num2keywords.append(keywords)
                 for keyword in keywords:
                     self.keyword2nums[keyword].append(doc_num)
+            else:
+                self.keyword2nums[""].append(doc_num)
 
             del document.info
 
@@ -128,7 +130,7 @@ class Clusterer:
 
         max_distance = 1.0
         distances = np.full((len(self.num2doc), len(self.num2doc)), max_distance, dtype=np.float64)
-        for i, (keyword, doc_nums) in enumerate(self.keyword2nums.items()):
+        for i, (_, doc_nums) in enumerate(self.keyword2nums.items()):
             vectors = self.vectors[doc_nums]
             batch_distances = pairwise_distances(
                 vectors,
