@@ -75,7 +75,8 @@ def run_parse(
     save_fields,
     start_date,
     end_date,
-    cleaner_config
+    cleaner_config,
+    log_rate
 ):
     # Choose right parser
     parser = None
@@ -101,7 +102,7 @@ def run_parse(
         document = cleaner(document)
         if document:
             documents[document["url"]] = document
-            if len(documents) % 10000 == 0:
+            if log_rate and len(documents) % log_rate == 0:
                 print("{} documents processed".format(len(documents)))
     documents = documents.values()
 
@@ -140,6 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("--start-date", type=str, default=None)
     parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--fmt", type=str, choices=("html", "jsonl", "csv"), required=True)
+    parser.add_argument("--log-rate", type=int, default=None)
     args = parser.parse_args()
     args.save_fields = args.save_fields.split(",")
     run_parse(**vars(args))

@@ -60,5 +60,5 @@ def read_tg_html(file_name):
 
 
 def read_tg_html_dir(directory):
-    for record in parse_dir(directory, ".html", read_tg_html, print_interval=1000):
+    for record in parse_dir(directory, ".html", read_tg_html, print_interval=10000):
         yield record
