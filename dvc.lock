@@ -75,8 +75,8 @@ parse_0525:
     md5: 8fc43a823776a95836202d5b70ed50a9
     size: 1027
   - path: purano/run_parse.py
-    md5: a1af0b3650b7235b6d13517496123096
-    size: 5746
+    md5: a5b8edf33fbd850c50eb3eca2e26ed8d
+    size: 5838
   params:
     configs/cleaner.jsonnet:
       cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
