@@ -16,7 +16,7 @@ def read_tg_html(file_name):
         if not prop or not content:
             continue
         if prop == "og:title":
-            doc["title"] = content
+            doc["title"] = content.strip().replace("\xa0", " ")
         elif prop == "og:url":
             doc["url"] = content
         elif prop == "og:site_name":
@@ -42,7 +42,7 @@ def read_tg_html(file_name):
     for p_element in article_element.iterfind("p"):
         text += " ".join(p_element.itertext()) + " "
         links += parse_links(p_element)
-    doc["text"] = text
+    doc["text"] = text.strip().replace("\xa0", " ")
     address_element = article_element.find("address")
     doc["text_time"] = None
     doc["authors"] = None
