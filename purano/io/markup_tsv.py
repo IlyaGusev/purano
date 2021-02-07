@@ -11,6 +11,8 @@ def read_markup_tsv(file_name, clean_header=True):
         clean_fields = ("first_title", "second_title", "first_text", "second_text")
         for record in records:
             for field in clean_fields:
+                if field not in record:
+                    continue
                 record[field] = record.pop(field).strip().replace("\xa0", " ")
     return records
 
