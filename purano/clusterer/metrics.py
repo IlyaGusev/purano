@@ -11,7 +11,8 @@ def calc_metrics(markup, url2record, labels):
         if not_found_in_labels or not_found_in_records:
             not_found_count += 1
             markup.remove(record)
-    print("Not found {} pairs from markup".format(not_found_count))
+    if not_found_count != 0:
+        print("Not found {} pairs from markup".format(not_found_count))
 
     targets = []
     predictions = []
