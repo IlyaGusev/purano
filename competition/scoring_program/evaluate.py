@@ -26,30 +26,49 @@ def evaluate(input_dir, output_dir):
 
     answers = dict()
     with open(truth_filename, "r") as truth:
+        header = next(truth).strip().split("\t")
         for line in truth:
-            first_url, second_url, answer = line.strip().split("\t")
-            answers[(first_url, second_url)] = answer
+            fields = line.strip().split("\t")
+            record = dict(zip(header, fields))
+            if record["dataset"] == "0527":
+                answers[(record["first_url"], record["second_url"])] = record["quality"]
 
     predictions = dict()
     with open(submission_filename, "r") as submission:
+        header = next(submission).strip().split("\t")
         for line in submission:
-            first_url, second_url, answer = line.strip().split("\t")
-            predictions[(first_url, second_url)] = answer
+            fields = line.strip().split("\t")
+            record = dict(zip(header, fields))
+            if record["dataset"] == "0527":
+                predictions[(record["first_url"], record["second_url"])] = record["quality"]
 
     p_size = len(predictions)
     a_size = len(answers)
     assert p_size == a_size, "Wrong number of predictions: {} vs {}".format(p_size, a_size)
 
-    correct_count = 0
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
     for sample_id, answer in answers.items():
         assert sample_id in predictions, "{} is missing".format(sample_id)
         prediction = predictions[sample_id]
-        if prediction == answer:
-            correct_count += 1
-    accuracy = float(correct_count) / a_size
+        if answer == "OK":
+            if prediction == answer:
+                tp += 1
+            else:
+                fn += 1
+        if answer == "BAD":
+            if prediction == answer:
+                tn += 1
+            else:
+                fp += 1
+    precision = float(tp) / (tp + fp)
+    recall = float(tp) / (tp + fn)
+    f1_score = 2 * precision * recall / (precision + recall)
 
     with open(output_filename, 'wb') as output:
-        output.write("accuracy:{}".format(accuracy))
+        output.write("f1_score:{}".format(f1_score))
 
 
 if __name__ == "__main__":

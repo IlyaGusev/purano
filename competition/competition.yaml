@@ -2,7 +2,7 @@ title: "Dialogue Evaluation 2021: Russian News Clustering and Headline Generatio
 description: Evaluation of different text clustering and summarization algorithms
 image: logo.jpg
 has_registration: True
-end_date: 2021-03-31
+end_date: 2021-03-20
 admin_names: phoenix120
 html:
     overview: overview.html
@@ -16,25 +16,41 @@ phases:
     1:
         phasenumber: 1
         label: "Clustering"
-        start_date: 2021-01-25
+        start_date: 2021-02-06
         max_submissions: 1000
         scoring_program: scoring_program.zip
         reference_data: reference_data.zip
         color: purple
         datasets:
             1:
-                name: Training dataset (May 25)
-                url: https://www.dropbox.com/s/26mc19ed7dkicwm/ru_clustering_0525.tsv
+                name: Training markup (May 25)
+                url: https://www.dropbox.com/s/8lu6dw8zcrn840j/ru_clustering_0525_urls.tsv
                 description: A tab-separated file with pair of news documents with labels on every line.
+            2:
+                name: Training documents (May 25)
+                url: https://data-static.usercontent.dev/DataClusteringDataset0525.tar.gz
+                description: "A collection of HTML documents from DC contest, May 25"
+            3:
+                name: "Test markup (May 27 and May 29)"
+                url: https://www.dropbox.com/s/3lb1hrckuq5u6ph/ru_clustering_test.tsv
+                description: A tab-separated file with pair of news documents without labels on every line.
+            4:
+                name: Test documents (May 27)
+                url: https://data-static.usercontent.dev/DataClusteringDataset0527.tar.gz
+                description: "A collection of HTML documents from DC contest, May 27"
+            5:
+                name: Test documents (May 29)
+                url: https://data-static.usercontent.dev/DataClusteringDataset0529.tar.gz
+                description: "A collection of HTML documents from DC contest, May 29"
 leaderboard:
     leaderboards:
         RESULTS: &RESULTS
             label: Results
             rank: 1
     columns:
-        accuracy:
+        f1_score:
             leaderboard: *RESULTS
-            label: Accuracy
+            label: F-score
             rank: 1
             numeric_format: 1
             sort: desc
