@@ -18,7 +18,7 @@ def read_tg_jsonl(file_name):
                 record["host"] = urlsplit(record["url"]).netloc
             record["text"] = record.pop("text").strip().replace("\xa0", " ")
             record["title"] = record.pop("title").strip().replace("\xa0", " ")
-            if "description" in record:
+            if "description" in record and record["description"]:
                 record["description"] = record.pop("description").strip().replace("\xa0", " ")
             yield record
 
