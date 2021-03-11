@@ -4,7 +4,7 @@ import json
 import itertools
 import random
 
-from purano.util.markup import read_markup_tsv, write_markup_tsv
+from purano.io import read_markup_tsv, write_markup_tsv
 
 
 def main(
@@ -13,8 +13,9 @@ def main(
     honey_tsv,
     current_markup_tsv,
     output_tsv,
-    true_prob=0.5,
-    random_prob=0.01
+    clustering_markup_tsv,
+    include_bad_samples,
+    randomize=False
 ):
     url2record = dict()
     with open(original_jsonl, "r") as r:
@@ -22,13 +23,20 @@ def main(
             record = json.loads(line)
             url2record[record["url"]] = record
 
-    existing_urls = set()
+    existing_keys = set()
     if current_markup_tsv:
         current_markup = read_markup_tsv(current_markup_tsv)
-        existing_urls = {(r["first_url"], r["second_url"]) for r in current_markup}
-        existing_urls |= {(r["second_url"], r["first_url"]) for r in current_markup}
+        existing_keys = {(r["left_url"], r["right_url"]) for r in current_markup}
+        existing_keys |= {(r["right_url"], r["left_url"]) for r in current_markup}
 
-    # honey_records = read_markup_tsv(honey_tsv)
+    existing_urls = set()
+    if clustering_markup_tsv:
+        clustering_markup = read_markup_tsv(clustering_markup_tsv)
+        for r in clustering_markup:
+            existing_urls.add(r["first_url"])
+            existing_urls.add(r["second_url"])
+
+    honey_records = read_markup_tsv(honey_tsv)
 
     with open(threads_json, "r") as r:
         threads = json.load(r)
@@ -36,51 +44,62 @@ def main(
     markup = []
 
     def add_key(key, context):
-        if key in existing_urls:
+        if key in existing_keys:
             return
         markup.append((key, context))
-        existing_urls.add(key)
-        existing_urls.add((key[1], key[0]))
+        existing_keys.add(key)
+        existing_keys.add((key[1], key[0]))
 
+    prev_thread_urls = None
     for thread in threads:
-        thread_urls = list(set(thread["articles"]))
+        thread_urls = set(thread["articles"])
+        thread_urls = [url for url in thread_urls if url not in existing_urls]
         thread_urls = thread_urls[:7]
         if len(thread_urls) <= 4:
             continue
         for url1, url2 in itertools.combinations(thread_urls, 2):
             add_key((url1, url2), copy.copy(thread_urls))
-            print(url1, url2)
+        if include_bad_samples != 0 and prev_thread_urls:
+            for _ in range(include_bad_samples):
+                prev_url = random.choice(prev_thread_urls)
+                cur_url = random.choice(thread_urls)
+                add_key((prev_url, cur_url), copy.copy(thread_urls))
+        prev_thread_urls = thread_urls
 
     final_markup = []
+    bad_count = 0
     for (url1, url2), context in markup:
         first = url2record[url1]
         second = url2record[url2]
         if random.random() < 0.5:
             first, second = second, first
-        context.remove(url1)
-        context.remove(url2)
+        if url1 in context:
+            context.remove(url1)
+        else:
+            bad_count += 1
+        if url2 in context:
+            context.remove(url2)
+        else:
+            bad_count += 1
         markup_record = {
-            "first_url": first["url"],
-            "second_url": second["url"],
-            "first_title": first["title"],
-            "second_title": second["title"],
-            "first_text": first["text"],
-            "second_text": second["text"]
+            "left_url": first["url"],
+            "right_url": second["url"],
+            "left_title": first["title"],
+            "right_title": second["title"]
         }
-        for i, url in enumerate(context):
-            context_title = url2record[url]["title"]
-            markup_record["context_title_{}".format(i)] = context_title
+        markup_record["info"] = json.dumps([url2record[url]["title"] for url in context], ensure_ascii=False)
         final_markup.append(markup_record)
 
-    # markup_len = len(honey_records) * 9
-    markup_len = 1000
+    print("Bad count: ", bad_count)
+    print("All count: ", len(final_markup))
+    markup_len = len(honey_records) * 9
+    if randomize:
+        random.shuffle(final_markup)
+    final_markup = final_markup[:markup_len] + honey_records
     random.shuffle(final_markup)
-    final_markup = final_markup[:markup_len]
-    # final_markup = markup[:markup_len] + honey_records
-    # random.shuffle(final_markup)
     print(len(final_markup))
 
-    write_markup_tsv(final_markup, output_tsv, res_key="res")
+    write_markup_tsv(final_markup, output_tsv, res_key="result", res_prefix="GOLDEN:", input_prefix="INPUT:")
 
 
 if __name__ == "__main__":
@@ -89,6 +108,9 @@ if __name__ == "__main__":
     parser.add_argument("--threads-json", type=str, required=True)
     parser.add_argument("--honey-tsv", type=str, default=None)
     parser.add_argument("--current-markup-tsv", type=str, default=None)
+    parser.add_argument("--clustering-markup-tsv", type=str, default=None)
     parser.add_argument("--output-tsv", type=str, required=True)
+    parser.add_argument("--randomize", action="store_true")
+    parser.add_argument("--include-bad-samples", type=int, default=0)
     args = parser.parse_args()
     main(**vars(args))

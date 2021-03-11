@@ -17,7 +17,15 @@ def read_markup_tsv(file_name, clean_header=True):
     return records
 
 
-def write_markup_tsv(records, file_name, res_prefix="", res_key="quality", input_prefix=""):
+def clear_field(field):
+    if isinstance(field, str):
+        return field.replace("\xa0", " ").replace("\n", " ").strip()
+    if isinstance(field, list) and field:
+        if isinstance(field[0], str):
+            return [clear_field(f) for f in field]
+    return field
+
+def write_markup_tsv(records, file_name, res_prefix="", res_key="quality", input_prefix="", ordered_keys=None):
     with open(file_name, "w") as w:
         writer = csv.writer(w, delimiter='\t', quotechar='"')
 
@@ -28,8 +36,10 @@ def write_markup_tsv(records, file_name, res_prefix="", res_key="quality", input
         if res_key not in keys:
             keys.append(res_key)
 
+        if ordered_keys:
+            keys = ordered_keys
         header = [input_prefix + k if k != res_key else res_prefix + k for k in keys]
         writer.writerow(header)
         for record in records:
-            row = [record.get(key, "").replace("\n", " ").strip() for key in keys]
+            row = [clear_field(record.get(key, "")) for key in keys]
             writer.writerow(row)
