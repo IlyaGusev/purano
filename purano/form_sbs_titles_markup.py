@@ -87,7 +87,8 @@ def main(
             "left_title": first["title"],
             "right_title": second["title"]
         }
-        markup_record["info"] = json.dumps([url2record[url]["title"] for url in context], ensure_ascii=False)
+        info = [url2record[url]["title"] for url in context]
+        markup_record["info"] = json.dumps(info, ensure_ascii=False)
         final_markup.append(markup_record)
 
     print("Bad count: ", bad_count)
@@ -99,7 +100,13 @@ def main(
     random.shuffle(final_markup)
     print(len(final_markup))
 
-    write_markup_tsv(final_markup, output_tsv, res_key="result", res_prefix="GOLDEN:", input_prefix="INPUT:")
+    write_markup_tsv(
+        final_markup,
+        output_tsv,
+        res_key="result",
+        res_prefix="GOLDEN:",
+        input_prefix="INPUT:"
+    )
 
 
 if __name__ == "__main__":

@@ -25,7 +25,15 @@ def clear_field(field):
             return [clear_field(f) for f in field]
     return field
 
-def write_markup_tsv(records, file_name, res_prefix="", res_key="quality", input_prefix="", ordered_keys=None):
+
+def write_markup_tsv(
+    records,
+    file_name,
+    res_prefix="",
+    res_key="quality",
+    input_prefix="",
+    ordered_keys=None
+):
     with open(file_name, "w") as w:
         writer = csv.writer(w, delimiter='\t', quotechar='"')
 
