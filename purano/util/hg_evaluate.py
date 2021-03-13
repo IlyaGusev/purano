@@ -18,8 +18,8 @@ def calc_metrics(refs, hyps, metric="all"):
     if metric in ("bleu", "all"):
         metrics["bleu"] = corpus_bleu(refs, hyps)
     if metric in ("rouge", "all"):
-        rouge = PyRouge(rouge_l=True, skip_gap=4, multi_ref_mode="best")
-        scores = rouge.evaluate(hyps[:100], refs[:100])
+        rouge = PyRouge(rouge_l=True, multi_ref_mode="best")
+        scores = rouge.evaluate(hyps, refs)
         metrics.update(scores)
     return metrics
 
