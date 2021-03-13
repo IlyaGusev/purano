@@ -4,7 +4,6 @@ from rouge_metric import PyRouge
 from nltk.translate.bleu_score import corpus_bleu
 
 import argparse
-import sys
 import os
 import json
 from collections import defaultdict
@@ -48,9 +47,13 @@ def get_final_metrics(hyps, all_refs, tokenize_after=True, lower=True):
     r1 = float(metrics["rouge-1"]["f"])
     r2 = float(metrics["rouge-2"]["f"])
     rl = float(metrics["rouge-l"]["f"])
+    bleu = float(metrics["bleu"])
     return {
         "rouge": (r1 + r2 + rl) / 3,
-        "bleu": float(metrics["bleu"])
+        "bleu": bleu,
+        "rouge-1": r1,
+        "rouge-2": r2,
+        "rouge-l": rl
     }
 
 
@@ -100,7 +103,10 @@ def evaluate(input_dir, output_dir):
     metrics = get_final_metrics(all_hyps, all_refs)
     with open(output_filename, 'w') as output:
         output.write("rouge:{}\n".format(metrics["rouge"]))
-        output.write("bleu:{}".format(metrics["bleu"]))
+        output.write("bleu:{}\n".format(metrics["bleu"]))
+        output.write("rouge_1:{}\n".format(metrics["rouge-1"]))
+        output.write("rouge_2:{}\n".format(metrics["rouge-2"]))
+        output.write("rouge_l:{}".format(metrics["rouge-l"]))
 
 
 if __name__ == "__main__":
@@ -109,4 +115,3 @@ if __name__ == "__main__":
     parser.add_argument('output_dir', type=str)
     args = parser.parse_args()
     evaluate(**vars(args))
-
