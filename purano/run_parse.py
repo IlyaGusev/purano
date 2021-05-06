@@ -76,7 +76,8 @@ def run_parse(
     start_date,
     end_date,
     cleaner_config,
-    log_rate
+    log_rate,
+    output_jsonl_path
 ):
     # Choose right parser
     parser = None
@@ -110,8 +111,8 @@ def run_parse(
     df = DataFrame(documents)
     df = df[save_fields]
     df = df[(~df["text"].isnull() & ~df["title"].isnull())]
-    df.drop_duplicates(subset=["url", "title", "text"], keep='last', inplace=True)
-    df.drop_duplicates(subset=["url"], keep='last', inplace=True)
+    df.drop_duplicates(subset=["url", "title", "text"], keep="last", inplace=True)
+    df.drop_duplicates(subset=["url"], keep="last", inplace=True)
     if start_date:
         df = df[df["date"] >= start_date]
     if end_date:
@@ -123,11 +124,14 @@ def run_parse(
     print(df.info())
     print(df.head(5))
 
+    if output_jsonl_path:
+        df.to_json(output_jsonl_path, orient="records", lines=True, force_ascii=False)
+
     # Save to database
     db_engine = "sqlite:///{}".format(output_file)
     engine = create_engine(db_engine)
     Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)
-    df.to_sql(Document.__tablename__, engine.raw_connection(), if_exists='append', index=False)
+    df.to_sql(Document.__tablename__, engine.raw_connection(), if_exists="append", index=False)
 
 
 if __name__ == "__main__":
@@ -142,6 +146,7 @@ if __name__ == "__main__":
     parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--fmt", type=str, choices=("html", "jsonl", "csv"), required=True)
     parser.add_argument("--log-rate", type=int, default=None)
+    parser.add_argument("--output-jsonl-path", type=str, default=None)
     args = parser.parse_args()
     args.save_fields = args.save_fields.split(",")
     run_parse(**vars(args))

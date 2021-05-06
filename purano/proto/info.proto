@@ -27,4 +27,5 @@ message Info {
     repeated double gen_title_embedding = 11;
     repeated EntitySpan text_slovnet_ner = 12;
     repeated double tfidf_embedding = 13;
+    repeated double title_text_news_tg_rubert_embedding = 14;
 }

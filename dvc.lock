@@ -1,223 +1,227 @@
-training_tfidf_model:
-  cmd: python3 -m purano.training.train_tfidf --config-file configs/training/tfidf.jsonnet
-    --input-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --output-file models/tfidf/ru_idfs.txt
-    --svd-matrix-file models/tfidf/svd_matrix.pt
-  deps:
-  - path: data/documents/ru_tg_1101_0510.jsonl.tar.gz
-    md5: ec5d8322478b4b7d8a17ea4db4998559
-    size: 435058420
-  - path: purano/training/models/tfidf.py
-    md5: 5f5abe01255c92fe3566ce4fcb2e2f26
-    size: 1735
-  - path: purano/training/train_tfidf.py
-    md5: 9738a8938b20bc8e87abb9e53ed3421a
-    size: 2276
-  params:
-    configs/training/tfidf.jsonnet:
-      building.max_df: 0.3
-      building.min_df: 20
-      svd_dim: 100
-  outs:
-  - path: models/tfidf/ru_idfs.txt
-    md5: 7ff453c65bf45f8148c6a0fb9adcf12a
-    size: 2298344
-  - path: models/tfidf/svd_matrix.pt
-    md5: 019c70060b78bec96b7175d286822c2f
-    size: 56985459
-training_text2title_model:
-  cmd: python3 -m purano.training.train_text2title --config-file configs/training/text2title.jsonnet
-    --train-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --val-file data/documents/ru_tg_0511_0517.jsonl
-    --output-title-model-path models/text2title/ru_ft_title_embedder.pt --output-text-model-path
-    models/text2title/ru_ft_text_embedder.pt --train-sample-rate 0.2 --val-sample-rate
-    0.2 --neptune-project "ilya-gusev/purano"
-  deps:
-  - path: data/documents/ru_tg_0511_0517.jsonl
-    md5: da62375b0016e60e5542be00534c3a2c
-    size: 428991918
-  - path: data/documents/ru_tg_1101_0510.jsonl.tar.gz
-    md5: ec5d8322478b4b7d8a17ea4db4998559
-    size: 435058420
-  - path: models/fasttext/ru_vectors_v3.bin
-    md5: 5f67e2397661798d4f5091423efbcfde
-    size: 369376324
-  - path: purano/training/datasets/text2title.py
-    md5: dd00d1b63d7d5f0ffa53ca093ea8b75e
-    size: 1815
-  - path: purano/training/models/text2title.py
-    md5: 4b6d6d5037d02423c4fc2f4b598502fb
-    size: 2046
-  - path: purano/training/train_text2title.py
-    md5: 20d2ef820a25c9619069fa48d82b03e2
-    size: 4319
-  params:
-    configs/training/text2title.jsonnet:
-      batch_size: 64
-      epochs: 100
-      ft_vector_model_path: models/fasttext/ru_vectors_v3.bin
-      max_words: 150
-      num_workers: 5
-      patience: 4
-  outs:
-  - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 8f83b07ea351a0872ff172e5b11765c0
-    size: 201122
-  - path: models/text2title/ru_ft_title_embedder.pt
-    md5: c0e54fc8ba27efb99f4d0ea7a9bf3997
-    size: 201122
-parse_0525:
-  cmd: python3 -m purano.run_parse --inputs data/documents/ru_tg_0525.jsonl --fmt
-    jsonl --output-file output/0525_parsed.db --cleaner-config configs/cleaner.jsonnet
-  deps:
-  - path: data/documents/ru_tg_0525.jsonl
-    md5: 6713a796a0f2d50a7ec63a744b68eee1
-    size: 72232046
-  - path: purano/io/tg_jsonl.py
-    md5: 8fc43a823776a95836202d5b70ed50a9
-    size: 1027
-  - path: purano/run_parse.py
-    md5: a5b8edf33fbd850c50eb3eca2e26ed8d
-    size: 5838
-  params:
-    configs/cleaner.jsonnet:
-      cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
-      is_lower: true
-      is_news_only: false
-      is_russian_only: false
-      lang_detect_model_path: models/lang_detect/lang_detect_v10.ftz
-  outs:
-  - path: output/0525_parsed.db
-    md5: 46c1889990cc25e28c2b7831db52cb6b
-    size: 140140544
-annotate_0525:
-  cmd: python3 -m purano.run_annotate --config configs/annotator.jsonnet --reannotate
-    --sort-by-date --output-file output/0525_annotated.db --input-file output/0525_parsed.db
-  deps:
-  - path: configs/annotator.jsonnet
-    md5: 5efd65ed348eddb84d35d635c9729f8c
-    size: 3471
-  - path: models/fasttext
-    md5: cd7ec4a620037c4af9776bd5305367a9.dir
-    size: 369376324
-    nfiles: 2
-  - path: models/slovnet
-    md5: 0fcb8213409c80db9a19e5a48bf28fe5.dir
-    size: 29020160
-    nfiles: 2
-  - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 8f83b07ea351a0872ff172e5b11765c0
-    size: 201122
-  - path: models/text2title/ru_ft_title_embedder.pt
-    md5: c0e54fc8ba27efb99f4d0ea7a9bf3997
-    size: 201122
-  - path: models/tfidf/ru_idfs.txt
-    md5: 7ff453c65bf45f8148c6a0fb9adcf12a
-    size: 2298344
-  - path: models/tfidf/svd_matrix.pt
-    md5: 019c70060b78bec96b7175d286822c2f
-    size: 56985459
-  - path: output/0525_parsed.db
-    md5: 46c1889990cc25e28c2b7831db52cb6b
-    size: 140140544
-  - path: purano/run_annotate.py
-    md5: bf810130972e360bb118491b4515dba7
-    size: 2433
-  outs:
-  - path: output/0525_annotated.db
-    md5: f4788a25d242617a0c32bfd2586f7ff0
-    size: 471760896
-clustering_0525:
-  cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
-    --output-file output/0525_clusters.json --input-file output/0525_annotated.db
-  deps:
-  - path: output/0525_annotated.db
-    md5: f4788a25d242617a0c32bfd2586f7ff0
-    size: 471760896
-  - path: purano/clusterer/clusterer.py
-    md5: 729fa6e20ebaf3274d791dffe9ec0cec
-    size: 8413
-  - path: purano/run_clustering.py
-    md5: 48c70248fb519542c044193b5488dac7
-    size: 1737
-  params:
-    configs/clusterer.jsonnet:
-      clustering:
-        type: agglomerative
-        affinity: precomputed
-        linkage: average
-        distance_threshold: 0.37
-        n_clusters:
-      distances.fix_hosts: true
-      distances.fix_time: false
-      distances.hosts_penalty: 5.0
-      distances.time_penalty: 4.0
-      fetching.embeddings.aggregation: concat
-      fetching.embeddings.keys:
-      - gen_title_embedding
-      fetching.embeddings.weights:
-      - 1.0
-      fetching.entities_key: title_slovnet_ner
-  outs:
-  - path: output/0525_clusters.json
-    md5: 69c2a70b20e1637415762a06ea8668f4
-    size: 2403054
-evaluate_0525:
-  cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
-    --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
-    --output-json output/0525_metrics.json
-  deps:
-  - path: data/documents/ru_tg_0525.jsonl
-    md5: 6713a796a0f2d50a7ec63a744b68eee1
-    size: 72232046
-  - path: data/markup/ru_clustering_0525.tsv
-    md5: e58f905251b9cb1ac970122f8835c872
-    size: 85667432
-  - path: output/0525_clusters.json
-    md5: 69c2a70b20e1637415762a06ea8668f4
-    size: 2403054
-  - path: purano/clusterer/metrics.py
-    md5: 348f61134470ba63266f8f099590d0c6
-    size: 1533
-  - path: purano/run_evaluate.py
-    md5: f6ba6fd4c3e2a5329a9b058cc8d44d86
-    size: 1746
-  outs:
-  - path: output/0525_metrics.json
-    md5: 9b716eb733bd911f7790c38b002a6b6f
-    size: 833
-annotate_light_0525:
-  cmd: python3 -m purano.run_annotate --config configs/annotator_light.jsonnet --reannotate
-    --sort-by-date --output-file output/0525_annotated_light.db --input-file output/0525_parsed.db
-  deps:
-  - path: configs/annotator_light.jsonnet
-    md5: 30a30114de3323a09eddbdcbc5c520c0
-    size: 2647
-  - path: models/fasttext
-    md5: cd7ec4a620037c4af9776bd5305367a9.dir
-    size: 369376324
-    nfiles: 2
-  - path: models/slovnet
-    md5: 0fcb8213409c80db9a19e5a48bf28fe5.dir
-    size: 29020160
-    nfiles: 2
-  - path: models/text2title/ru_ft_text_embedder.pt
-    md5: 8f83b07ea351a0872ff172e5b11765c0
-    size: 201122
-  - path: models/text2title/ru_ft_title_embedder.pt
-    md5: c0e54fc8ba27efb99f4d0ea7a9bf3997
-    size: 201122
-  - path: models/tfidf/ru_idfs.txt
-    md5: 7ff453c65bf45f8148c6a0fb9adcf12a
-    size: 2298344
-  - path: models/tfidf/svd_matrix.pt
-    md5: 019c70060b78bec96b7175d286822c2f
-    size: 56985459
-  - path: output/0525_parsed.db
-    md5: 46c1889990cc25e28c2b7831db52cb6b
-    size: 140140544
-  - path: purano/run_annotate.py
-    md5: bf810130972e360bb118491b4515dba7
-    size: 2433
-  outs:
-  - path: output/0525_annotated_light.db
-    md5: 349e7508e7324eb18c32286ee37c84c0
-    size: 316346368
+schema: '2.0'
+stages:
+  training_tfidf_model:
+    cmd: python3 -m purano.training.train_tfidf --config-file configs/training/tfidf.jsonnet
+      --input-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --output-file models/tfidf/ru_idfs.txt
+      --svd-matrix-file models/tfidf/svd_matrix.pt
+    deps:
+    - path: data/documents/ru_tg_1101_0510.jsonl.tar.gz
+      md5: ec5d8322478b4b7d8a17ea4db4998559
+      size: 435058420
+    - path: purano/training/models/tfidf.py
+      md5: 5f5abe01255c92fe3566ce4fcb2e2f26
+      size: 1735
+    - path: purano/training/train_tfidf.py
+      md5: 9738a8938b20bc8e87abb9e53ed3421a
+      size: 2276
+    params:
+      configs/training/tfidf.jsonnet:
+        building.max_df: 0.3
+        building.min_df: 20
+        svd_dim: 100
+    outs:
+    - path: models/tfidf/ru_idfs.txt
+      md5: 7ff453c65bf45f8148c6a0fb9adcf12a
+      size: 2298344
+    - path: models/tfidf/svd_matrix.pt
+      md5: 019c70060b78bec96b7175d286822c2f
+      size: 56985459
+  training_text2title_model:
+    cmd: python3 -m purano.training.train_text2title --config-file configs/training/text2title.jsonnet
+      --train-file data/documents/ru_tg_1101_0510.jsonl.tar.gz --val-file data/documents/ru_tg_0511_0517.jsonl
+      --output-title-model-path models/text2title/ru_ft_title_embedder.pt --output-text-model-path
+      models/text2title/ru_ft_text_embedder.pt --train-sample-rate 0.2 --val-sample-rate
+      0.2 --neptune-project "ilya-gusev/purano"
+    deps:
+    - path: data/documents/ru_tg_0511_0517.jsonl
+      md5: da62375b0016e60e5542be00534c3a2c
+      size: 428991918
+    - path: data/documents/ru_tg_1101_0510.jsonl.tar.gz
+      md5: ec5d8322478b4b7d8a17ea4db4998559
+      size: 435058420
+    - path: models/fasttext/ru_vectors_v3.bin
+      md5: 5f67e2397661798d4f5091423efbcfde
+      size: 369376324
+    - path: purano/training/datasets/text2title.py
+      md5: dd00d1b63d7d5f0ffa53ca093ea8b75e
+      size: 1815
+    - path: purano/training/models/text2title.py
+      md5: 4b6d6d5037d02423c4fc2f4b598502fb
+      size: 2046
+    - path: purano/training/train_text2title.py
+      md5: 20d2ef820a25c9619069fa48d82b03e2
+      size: 4319
+    params:
+      configs/training/text2title.jsonnet:
+        batch_size: 64
+        epochs: 100
+        ft_vector_model_path: models/fasttext/ru_vectors_v3.bin
+        max_words: 150
+        num_workers: 5
+        patience: 4
+    outs:
+    - path: models/text2title/ru_ft_text_embedder.pt
+      md5: 8f83b07ea351a0872ff172e5b11765c0
+      size: 201122
+    - path: models/text2title/ru_ft_title_embedder.pt
+      md5: c0e54fc8ba27efb99f4d0ea7a9bf3997
+      size: 201122
+  parse_0525:
+    cmd: python3 -m purano.run_parse --inputs data/documents/ru_tg_0525.jsonl --fmt
+      jsonl --output-file output/0525_parsed.db --cleaner-config configs/cleaner.jsonnet
+    deps:
+    - path: data/documents/ru_tg_0525.jsonl
+      md5: 6713a796a0f2d50a7ec63a744b68eee1
+      size: 72232046
+    - path: purano/io/tg_jsonl.py
+      md5: 94f4309094b3fb0a0080121256da226d
+      size: 1053
+    - path: purano/run_parse.py
+      md5: d7a32e1ab49dda3f5e6cde255e220afb
+      size: 6046
+    params:
+      configs/cleaner.jsonnet:
+        cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
+        is_lower: true
+        is_news_only: false
+        is_russian_only: false
+        lang_detect_model_path: models/lang_detect/lang_detect_v10.ftz
+    outs:
+    - path: output/0525_parsed.db
+      md5: 46c1889990cc25e28c2b7831db52cb6b
+      size: 140140544
+  annotate_0525:
+    cmd: python3 -m purano.run_annotate --config configs/annotator.jsonnet --reannotate
+      --sort-by-date --output-file output/0525_annotated.db --input-file output/0525_parsed.db
+    deps:
+    - path: configs/annotator.jsonnet
+      md5: a8408f57af1167214110ad9bd6a41b37
+      size: 3507
+    - path: models/fasttext
+      md5: cd7ec4a620037c4af9776bd5305367a9.dir
+      size: 369376324
+      nfiles: 2
+    - path: models/slovnet
+      md5: 0fcb8213409c80db9a19e5a48bf28fe5.dir
+      size: 29020160
+      nfiles: 2
+    - path: models/text2title/ru_ft_text_embedder.pt
+      md5: 8f83b07ea351a0872ff172e5b11765c0
+      size: 201122
+    - path: models/text2title/ru_ft_title_embedder.pt
+      md5: c0e54fc8ba27efb99f4d0ea7a9bf3997
+      size: 201122
+    - path: models/tfidf/ru_idfs.txt
+      md5: 7ff453c65bf45f8148c6a0fb9adcf12a
+      size: 2298344
+    - path: models/tfidf/svd_matrix.pt
+      md5: 019c70060b78bec96b7175d286822c2f
+      size: 56985459
+    - path: output/0525_parsed.db
+      md5: 46c1889990cc25e28c2b7831db52cb6b
+      size: 140140544
+    - path: purano/run_annotate.py
+      md5: bf810130972e360bb118491b4515dba7
+      size: 2433
+    outs:
+    - path: output/0525_annotated.db
+      md5: a1f4e891c32270c7ce20fa2e2b688052
+      size: 471760896
+  clustering_0525:
+    cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
+      --output-file output/0525_clusters.json --input-file output/0525_annotated.db
+    deps:
+    - path: output/0525_annotated.db
+      md5: a1f4e891c32270c7ce20fa2e2b688052
+      size: 471760896
+    - path: purano/clusterer/clusterer.py
+      md5: 243b63279e9ce155e886a50b30cfeed5
+      size: 10791
+    - path: purano/run_clustering.py
+      md5: 6e8fceab319934e72c0e1a70d05889ba
+      size: 1706
+    params:
+      configs/clusterer.jsonnet:
+        clustering:
+          type: agglomerative
+          affinity: precomputed
+          linkage: average
+          distance_threshold: 0.37
+          n_clusters:
+          window_size: 21000
+          intersection_size: 5000
+        distances.fix_hosts: true
+        distances.fix_time: false
+        distances.hosts_penalty: 5.0
+        distances.time_penalty: 4.0
+        fetching.embeddings.aggregation: concat
+        fetching.embeddings.keys:
+        - gen_title_embedding
+        fetching.embeddings.weights:
+        - 1.0
+        fetching.entities_key: title_slovnet_ner
+    outs:
+    - path: output/0525_clusters.json
+      md5: 4a687d30b772f258a7458ec83845b7c3
+      size: 2412162
+  evaluate_0525:
+    cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
+      --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
+      --output-json output/0525_metrics.json
+    deps:
+    - path: data/documents/ru_tg_0525.jsonl
+      md5: 6713a796a0f2d50a7ec63a744b68eee1
+      size: 72232046
+    - path: data/markup/ru_clustering_0525.tsv
+      md5: e58f905251b9cb1ac970122f8835c872
+      size: 85667432
+    - path: output/0525_clusters.json
+      md5: 4a687d30b772f258a7458ec83845b7c3
+      size: 2412162
+    - path: purano/clusterer/metrics.py
+      md5: c909a0299ca13fbc6e7a538243238257
+      size: 1566
+    - path: purano/run_evaluate.py
+      md5: f6ba6fd4c3e2a5329a9b058cc8d44d86
+      size: 1746
+    outs:
+    - path: output/0525_metrics.json
+      md5: 5f03beaf8fdaad076e297475bf445c8a
+      size: 834
+  annotate_light_0525:
+    cmd: python3 -m purano.run_annotate --config configs/annotator_light.jsonnet --reannotate
+      --sort-by-date --output-file output/0525_annotated_light.db --input-file output/0525_parsed.db
+    deps:
+    - path: configs/annotator_light.jsonnet
+      md5: 30a30114de3323a09eddbdcbc5c520c0
+      size: 2647
+    - path: models/fasttext
+      md5: cd7ec4a620037c4af9776bd5305367a9.dir
+      size: 369376324
+      nfiles: 2
+    - path: models/slovnet
+      md5: 0fcb8213409c80db9a19e5a48bf28fe5.dir
+      size: 29020160
+      nfiles: 2
+    - path: models/text2title/ru_ft_text_embedder.pt
+      md5: 8f83b07ea351a0872ff172e5b11765c0
+      size: 201122
+    - path: models/text2title/ru_ft_title_embedder.pt
+      md5: c0e54fc8ba27efb99f4d0ea7a9bf3997
+      size: 201122
+    - path: models/tfidf/ru_idfs.txt
+      md5: 7ff453c65bf45f8148c6a0fb9adcf12a
+      size: 2298344
+    - path: models/tfidf/svd_matrix.pt
+      md5: 019c70060b78bec96b7175d286822c2f
+      size: 56985459
+    - path: output/0525_parsed.db
+      md5: 46c1889990cc25e28c2b7831db52cb6b
+      size: 140140544
+    - path: purano/run_annotate.py
+      md5: bf810130972e360bb118491b4515dba7
+      size: 2433
+    outs:
+    - path: output/0525_annotated_light.db
+      md5: 349e7508e7324eb18c32286ee37c84c0
+      size: 316346368

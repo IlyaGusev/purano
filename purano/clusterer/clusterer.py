@@ -33,6 +33,7 @@ class Clusterer:
         self.num2keywords = list()
         self.num2host = list()
         self.num2timestamp = list()
+        self.doc_count = 0
 
         self.id2num = dict()
         self.keyword2nums = defaultdict(list)
@@ -115,54 +116,111 @@ class Clusterer:
             self.num2host.append(document.host)
             self.num2timestamp.append(document.date.timestamp())
 
+        self.doc_count = len(self.num2doc)
         self.vectors = np.array(vectors)
 
-    def calc_distances(self):
+    def _calc_distances(self, start_index, end_index):
+        print("Calculating distances matrix for {} to {}...".format(start_index, end_index))
         config = self.config["distances"]
-        if self.distances is not None and config.get("cache_distances", False):
-            return
-
-        print("Calculating distances matrix...")
         fix_hosts = config.pop("fix_hosts", False)
         fix_time = config.pop("fix_time", False)
         hosts_penalty = config.pop("hosts_penalty", 1.0)
         time_penalty_modifier = config.pop("time_penalty", 1.0)
 
         max_distance = 1.0
-        distances = np.full((len(self.num2doc), len(self.num2doc)), max_distance, dtype=np.float64)
+        window_size = end_index - start_index
+        distances = np.full((window_size, window_size), max_distance, dtype=np.float64)
         for i, (_, doc_nums) in enumerate(self.keyword2nums.items()):
+            doc_nums = [num for num in doc_nums if start_index <= num < end_index]
+            if not doc_nums:
+                continue
             vectors = self.vectors[doc_nums]
             batch_distances = pairwise_distances(
                 vectors,
                 metric="cosine",
-                n_jobs=1,
-                force_all_finite=False)
+                n_jobs=1, # For minimal memory consumption
+                force_all_finite=False # For performance
+            )
+            # l - local, g - global, b - batch-level
             for (l1, g1), (l2, g2) in itertools.product(enumerate(doc_nums), repeat=2):
-                distances[g1, g2] = batch_distances[l1, l2]
+                b1 = g1 - start_index
+                b2 = g2 - start_index
+                distances[b1, b2] = batch_distances[l1, l2]
                 if fix_hosts and self.num2host[g1] == self.num2host[g2]:
-                    distances[g1, g2] = min(max_distance, distances[g1, g2] * hosts_penalty)
+                    distances[b1, b2] = min(max_distance, distances[b1, b2] * hosts_penalty)
                 if fix_time and g1 != g2:
                     time_diff = abs(self.num2timestamp[g1] - self.num2timestamp[g2])
                     hours_shifted = (time_diff / 3600) - 12
                     time_penalty = 1.0 + expit(hours_shifted) * (time_penalty_modifier - 1.0)
-                    distances[g1, g2] = min(max_distance, distances[g1, g2] * time_penalty)
-        self.distances = distances
+                    distances[b1, b2] = min(max_distance, distances[b1, b2] * time_penalty)
+        return distances
 
     def cluster(self):
         print("Running clustering algorithm...")
         config = self.config["clustering"]
         clustering_type = config.pop("type")
-        clustering = CLUSTERINGS[clustering_type](**config)
-        labels = clustering.fit_predict(self.distances)
-        max_label = max(labels)
-        for label, doc in zip(labels, self.num2doc):
-            self.labels[doc.id] = label
-            self.clusters[label].append(doc.id)
-        noisy_docs = self.clusters.pop(-1, tuple())
-        for doc_id in noisy_docs:
-            max_label += 1
-            self.labels[doc_id] = max_label
-            self.clusters[max_label].append(doc_id)
+        window_size = config.pop("window_size")
+        intersection_size = config.pop("intersection_size")
+
+        self.labels = dict()
+        self.clusters = defaultdict(list)
+        old_labels_to_new = dict()
+        max_label = 0
+
+        start_index = 0
+        end_index = min(window_size, self.doc_count)
+        while start_index < self.doc_count and start_index < end_index:
+            clustering = CLUSTERINGS[clustering_type](**config)
+            distances = self._calc_distances(start_index, end_index)
+            labels = clustering.fit_predict(distances)
+            labels = [label + max_label if label != -1 else label for label in labels]
+            max_label = max(labels)
+
+            for doc_num in range(start_index, end_index):
+                doc_id = self.num2doc[doc_num].id
+                label_num = doc_num - start_index
+                label = labels[label_num]
+
+                old_label = self.labels.get(doc_id, None)
+                if old_label is not None:
+                    old_labels_to_new[old_label] = label
+
+                self.labels[doc_id] = label
+                self.clusters[label].append(doc_id)
+
+            noisy_docs = self.clusters.pop(-1, tuple())
+            for doc_id in noisy_docs:
+                max_label += 1
+                self.labels[doc_id] = max_label
+                self.clusters[max_label].append(doc_id)
+
+            if end_index == self.doc_count:
+                break
+            start_index += window_size - intersection_size
+            end_index = min(start_index + window_size, self.doc_count)
+            if end_index == self.doc_count:
+                start_index = max(end_index - window_size, 0)
+
+        if not old_labels_to_new:
+            return
+
+        # Compact labels by transitivity
+        for old_label, new_label in old_labels_to_new.items():
+            newer_label = new_label
+            while newer_label is not None:
+                newest_label = newer_label
+                newer_label = old_labels_to_new.get(newer_label, None)
+            assert newest_label is not None
+            old_labels_to_new[old_label] = newest_label
+
+        for doc in self.num2doc:
+            doc_id = doc.id
+            label = self.labels[doc_id]
+            new_label = old_labels_to_new.get(label, label)
+            self.labels[doc_id] = new_label
+
+        for old_label, new_label in old_labels_to_new.items():
+            self.clusters[new_label].extend(self.clusters.pop(old_label))
 
     def get_labels(self):
         labels = dict()

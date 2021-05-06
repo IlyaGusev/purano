@@ -15,11 +15,19 @@ class TransformersProcessor(Processor):
         self,
         pretrained_model_name_or_path: str,
         log_info: bool = False,
-        use_gpu: bool = False
+        use_gpu: bool = False,
+        do_lower_case: bool = False,
+        do_basic_tokenize: bool = True,
+        strip_accents: bool = True
     ):
         if log_info:
             logging.set_verbosity_info()
-        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            pretrained_model_name_or_path,
+            do_lower_case=do_lower_case,
+            do_basic_tokenize=do_basic_tokenize,
+            strip_accents=strip_accents
+        )
         self.model = AutoModel.from_pretrained(pretrained_model_name_or_path)
         self.use_gpu = use_gpu and torch.cuda.is_available()
         if self.use_gpu:

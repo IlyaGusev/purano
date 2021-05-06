@@ -4,7 +4,9 @@
         "affinity": "precomputed",
         "linkage": "average",
         "distance_threshold": 0.37,
-        "n_clusters": null
+        "n_clusters": null,
+        "window_size": 21000,
+        "intersection_size": 5000
     },
     "fetching": {
         "embeddings": {
@@ -20,5 +22,6 @@
         "hosts_penalty": 5.0,
         "fix_time": false,
         "time_penalty": 4.0
-    }
+    },
+    "window_size": 20000
 }

@@ -28,7 +28,6 @@ def cluster(
         sort_by_date,
         nrows
     )
-    clusterer.calc_distances()
     clusterer.cluster()
     clusterer.print_clusters()
     clusterer.save(output_file)
