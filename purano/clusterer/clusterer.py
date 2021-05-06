@@ -138,8 +138,8 @@ class Clusterer:
             batch_distances = pairwise_distances(
                 vectors,
                 metric="cosine",
-                n_jobs=1, # For minimal memory consumption
-                force_all_finite=False # For performance
+                n_jobs=1,  # For minimal memory consumption
+                force_all_finite=False  # For performance
             )
             # l - local, g - global, b - batch-level
             for (l1, g1), (l2, g2) in itertools.product(enumerate(doc_nums), repeat=2):

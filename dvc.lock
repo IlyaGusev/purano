@@ -135,8 +135,8 @@ stages:
       md5: a1f4e891c32270c7ce20fa2e2b688052
       size: 471760896
     - path: purano/clusterer/clusterer.py
-      md5: 243b63279e9ce155e886a50b30cfeed5
-      size: 10791
+      md5: 151d460fc97b9f3605f5cca49fde2794
+      size: 10793
     - path: purano/run_clustering.py
       md5: 6e8fceab319934e72c0e1a70d05889ba
       size: 1706
