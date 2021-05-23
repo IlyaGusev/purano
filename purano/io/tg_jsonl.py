@@ -12,8 +12,11 @@ def read_tg_jsonl(file_name):
             assert "title" in record
             assert "text" in record
             assert "url" in record
-            timestamp = record.get("timestamp")
-            record["date"] = datetime.utcfromtimestamp(timestamp)
+            if "timestamp" in record:
+                timestamp = record.get("timestamp")
+                record["date"] = datetime.utcfromtimestamp(timestamp)
+            if "date" in record:
+                record["date"] = datetime.strptime(record["date"], "%Y-%m-%d")
             if "host" not in record:
                 record["host"] = urlsplit(record["url"]).netloc
             record["text"] = record.pop("text").strip().replace("\xa0", " ")
