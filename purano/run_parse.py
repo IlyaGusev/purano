@@ -8,6 +8,8 @@ from fasttext import load_model as ft_load_model
 from pandas import DataFrame
 from sqlalchemy import create_engine
 from pyonmttok import Tokenizer
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from purano.models import Document, Base
 from purano.io import read_tg_html_dir, read_tg_jsonl_dir, \
@@ -94,12 +96,25 @@ def run_parse(
     else:
         assert False, "Parser for format {} is not set".format(fmt)
 
+    existing_urls = set()
+    if os.path.exists(output_file):
+        db_engine = "sqlite:///{}".format(output_file)
+        engine = create_engine(db_engine)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        query = session.query(Document)
+        docs = query.all()
+        for doc in docs:
+            existing_urls.add(doc.url)
+
     # Parse and clean documents
     cleaner = DocumentsCleaner(cleaner_config)
     documents = {}
     for i, document in enumerate(parser(inputs)):
         if ndocs and i >= ndocs:
             break
+        if document["url"] in existing_urls:
+            continue
         document = cleaner(document)
         if document:
             documents[document["url"]] = document

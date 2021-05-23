@@ -8,6 +8,11 @@ from sqlalchemy.orm import sessionmaker
 from purano.models import Document
 
 
+def entity_to_tuple(e, text):
+    result = (e.begin, e.end, e.tag, text[e.begin: e.end])
+    return result
+
+
 def to_jsonl(input_file, output_file):
     assert os.path.exists(input_file)
     db_engine = "sqlite:///{}".format(input_file)
@@ -15,6 +20,7 @@ def to_jsonl(input_file, output_file):
     Session = sessionmaker(bind=engine)
     session = Session()
     query = session.query(Document)
+    query = query.join(Document.info)
     docs = query.all()
     with open(output_file, "w") as w:
         for doc in docs:
@@ -24,7 +30,12 @@ def to_jsonl(input_file, output_file):
                 "title": title,
                 "text": text,
                 "url": doc.url,
-                "timestamp": int(doc.date.timestamp())
+                "timestamp": int(doc.date.timestamp()),
+                "host": doc.host,
+                "embedding": list(doc.info["gen_title_embedding"]),
+                "keywords": list(doc.info["tfidf_keywords"]),
+                "title_entities": [entity_to_tuple(e, doc.title) for e in doc.info["title_slovnet_ner"]],
+                "text_entities": [entity_to_tuple(e, doc.text) for e in doc.info["text_slovnet_ner"]]
             }, ensure_ascii=False).strip() + "\n")
 
 
