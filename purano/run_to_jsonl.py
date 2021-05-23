@@ -26,6 +26,10 @@ def to_jsonl(input_file, output_file):
         for doc in docs:
             title = doc.title.replace("\xa0", " ").strip()
             text = doc.text.replace("\xa0", " ").strip()
+            title_slovnet_ner = doc.info["title_slovnet_ner"]
+            title_entities = [entity_to_tuple(e, doc.title) for e in title_slovnet_ner]
+            text_slovnet_ner = doc.info["text_slovnet_ner"]
+            text_entities = [entity_to_tuple(e, doc.text) for e in text_slovnet_ner]
             w.write(json.dumps({
                 "title": title,
                 "text": text,
@@ -34,8 +38,8 @@ def to_jsonl(input_file, output_file):
                 "host": doc.host,
                 "embedding": list(doc.info["gen_title_embedding"]),
                 "keywords": list(doc.info["tfidf_keywords"]),
-                "title_entities": [entity_to_tuple(e, doc.title) for e in doc.info["title_slovnet_ner"]],
-                "text_entities": [entity_to_tuple(e, doc.text) for e in doc.info["text_slovnet_ner"]]
+                "title_entities": title_entities,
+                "text_entities": text_entities
             }, ensure_ascii=False).strip() + "\n")
 
 

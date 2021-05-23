@@ -6,7 +6,6 @@ from typing import Optional
 from _jsonnet import evaluate_file as jsonnet_evaluate_file
 from fasttext import load_model as ft_load_model
 from pandas import DataFrame
-from sqlalchemy import create_engine
 from pyonmttok import Tokenizer
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
