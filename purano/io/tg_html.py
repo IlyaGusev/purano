@@ -1,3 +1,4 @@
+import json
 from dateutil.parser import parse as parse_datetime
 from urllib.parse import urlsplit
 from xml.etree.cElementTree import parse as parse_xml
@@ -42,6 +43,8 @@ def read_tg_html(file_name):
     for p_element in article_element.iterfind("p"):
         text += " ".join(p_element.itertext()) + " "
         links += parse_links(p_element)
+    doc["out_links"] = json.dumps(links, ensure_ascii=False)
+
     doc["text"] = text.strip().replace("\xa0", " ")
     address_element = article_element.find("address")
     doc["text_time"] = None

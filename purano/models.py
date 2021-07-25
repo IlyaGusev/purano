@@ -19,6 +19,7 @@ class Document(Base):
     title = Column(Text)
     patched_text = Column(Text)
     patched_title = Column(Text)
+    out_links = Column(Text, nullable=True)
     topics = Column(Text, nullable=True)
     authors = Column(Text, nullable=True)
     info = relationship("Info", uselist=False, back_populates="document")
