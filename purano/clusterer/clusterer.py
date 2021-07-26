@@ -155,6 +155,37 @@ class Clusterer:
                     distances[b1, b2] = min(max_distance, distances[b1, b2] * time_penalty)
         return distances
 
+
+    @staticmethod
+    def compact_mapping(old_labels_to_new):
+        # Compact labels by transitivity
+        for old_label, new_label in old_labels_to_new.items():
+            newer_label = new_label
+            while newer_label is not None:
+                newest_label = newer_label
+                newer_label = old_labels_to_new.get(newer_label, None)
+            assert newest_label is not None
+            old_labels_to_new[old_label] = newest_label
+        return old_labels_to_new
+
+    def connect_window(self, old_labels_to_new, start_index, end_index):
+        if not old_labels_to_new:
+            return
+
+        for doc_num in range(start_index, end_index):
+            doc_id = self.num2doc[doc_num].id
+            label = self.labels[doc_id]
+            new_label = old_labels_to_new.get(label, label)
+            self.labels[doc_id] = new_label
+
+        for old_label, new_label in old_labels_to_new.items():
+            if old_label == new_label:
+                continue
+            self.clusters[new_label].extend(self.clusters.pop(old_label))
+            self.clusters[new_label] = list(set(self.clusters[new_label]))
+
+        old_labels_to_new.clear()
+
     def cluster(self):
         print("Running clustering algorithm...")
         config = self.config["clustering"]
@@ -182,17 +213,25 @@ class Clusterer:
                 label = labels[label_num]
 
                 old_label = self.labels.get(doc_id, None)
-                if old_label is not None:
-                    old_labels_to_new[old_label] = label
+                if old_label is None:
+                    self.labels[doc_id] = label
+                    self.clusters[label].append(doc_id)
+                    continue
 
-                self.labels[doc_id] = label
-                self.clusters[label].append(doc_id)
+                if old_label not in old_labels_to_new:
+                    old_labels_to_new[old_label] = label
 
             noisy_docs = self.clusters.pop(-1, tuple())
             for doc_id in noisy_docs:
+                if doc_id in self.labels:
+                    continue
                 max_label += 1
                 self.labels[doc_id] = max_label
                 self.clusters[max_label].append(doc_id)
+
+            self.compact_mapping(old_labels_to_new)
+            self.connect_window(old_labels_to_new, start_index, end_index)
+            old_labels_to_new = dict()
 
             if end_index == self.doc_count:
                 break
@@ -200,27 +239,6 @@ class Clusterer:
             end_index = min(start_index + window_size, self.doc_count)
             if end_index == self.doc_count:
                 start_index = max(end_index - window_size, 0)
-
-        if not old_labels_to_new:
-            return
-
-        # Compact labels by transitivity
-        for old_label, new_label in old_labels_to_new.items():
-            newer_label = new_label
-            while newer_label is not None:
-                newest_label = newer_label
-                newer_label = old_labels_to_new.get(newer_label, None)
-            assert newest_label is not None
-            old_labels_to_new[old_label] = newest_label
-
-        for doc in self.num2doc:
-            doc_id = doc.id
-            label = self.labels[doc_id]
-            new_label = old_labels_to_new.get(label, label)
-            self.labels[doc_id] = new_label
-
-        for old_label, new_label in old_labels_to_new.items():
-            self.clusters[new_label].extend(self.clusters.pop(old_label))
 
     def get_labels(self):
         labels = dict()
@@ -274,6 +292,6 @@ class Clusterer:
             if label == -1:
                 continue
             cluster_urls = [self.num2doc[self.id2num[doc_id]].url for doc_id in cluster]
-            clusters.append({"articles": cluster_urls})
+            clusters.append({"articles": cluster_urls, "label": int(label)})
         with open(output_file_name, "w") as w:
             json.dump(clusters, w, ensure_ascii=False, indent=4)

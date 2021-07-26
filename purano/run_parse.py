@@ -154,7 +154,7 @@ if __name__ == "__main__":
     parser.add_argument("--ndocs", type=int, default=None)
     parser.add_argument("--output-file", type=str, default="output/parsed.db")
     parser.add_argument("--save-fields", type=str,
-                        default="url,host,title,text,date,patched_title,patched_text,category")
+                        default="url,host,title,text,date,patched_title,patched_text,category,out_links")
     parser.add_argument("--cleaner-config", type=str, default="configs/cleaner.jsonnet")
     parser.add_argument("--start-date", type=str, default=None)
     parser.add_argument("--end-date", type=str, default=None)

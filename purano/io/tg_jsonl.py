@@ -23,6 +23,8 @@ def read_tg_jsonl(file_name):
             record["title"] = record.pop("title").strip().replace("\xa0", " ")
             if "description" in record and record["description"]:
                 record["description"] = record.pop("description").strip().replace("\xa0", " ")
+            if "out_links" not in record:
+                record["out_links"] = "[]"
             yield record
 
 

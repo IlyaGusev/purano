@@ -74,11 +74,11 @@ stages:
       md5: 6713a796a0f2d50a7ec63a744b68eee1
       size: 72232046
     - path: purano/io/tg_jsonl.py
-      md5: 94f4309094b3fb0a0080121256da226d
-      size: 1053
+      md5: 690be67dd8c7ae4747556c6ee6e9397d
+      size: 1298
     - path: purano/run_parse.py
-      md5: d7a32e1ab49dda3f5e6cde255e220afb
-      size: 6046
+      md5: 621eff381f48cf58313ea02aaa19b507
+      size: 6525
     params:
       configs/cleaner.jsonnet:
         cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
@@ -88,8 +88,8 @@ stages:
         lang_detect_model_path: models/lang_detect/lang_detect_v10.ftz
     outs:
     - path: output/0525_parsed.db
-      md5: 46c1889990cc25e28c2b7831db52cb6b
-      size: 140140544
+      md5: 6d864f7a1a6f648a6ae783d265caf184
+      size: 129195008
   annotate_0525:
     cmd: python3 -m purano.run_annotate --config configs/annotator.jsonnet --reannotate
       --sort-by-date --output-file output/0525_annotated.db --input-file output/0525_parsed.db
@@ -118,25 +118,25 @@ stages:
       md5: 019c70060b78bec96b7175d286822c2f
       size: 56985459
     - path: output/0525_parsed.db
-      md5: 46c1889990cc25e28c2b7831db52cb6b
-      size: 140140544
+      md5: 6d864f7a1a6f648a6ae783d265caf184
+      size: 129195008
     - path: purano/run_annotate.py
       md5: bf810130972e360bb118491b4515dba7
       size: 2433
     outs:
     - path: output/0525_annotated.db
-      md5: a1f4e891c32270c7ce20fa2e2b688052
-      size: 471760896
+      md5: ccbe54ea92b68fdcb5a74e05e1a25206
+      size: 443144192
   clustering_0525:
     cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
       --output-file output/0525_clusters.json --input-file output/0525_annotated.db
     deps:
     - path: output/0525_annotated.db
-      md5: a1f4e891c32270c7ce20fa2e2b688052
-      size: 471760896
+      md5: ccbe54ea92b68fdcb5a74e05e1a25206
+      size: 443144192
     - path: purano/clusterer/clusterer.py
-      md5: 151d460fc97b9f3605f5cca49fde2794
-      size: 10793
+      md5: a00a13aa8f33124404ea3728f4eadf48
+      size: 11522
     - path: purano/run_clustering.py
       md5: 6e8fceab319934e72c0e1a70d05889ba
       size: 1706
@@ -162,8 +162,8 @@ stages:
         fetching.entities_key: title_slovnet_ner
     outs:
     - path: output/0525_clusters.json
-      md5: 4a687d30b772f258a7458ec83845b7c3
-      size: 2412162
+      md5: aba3c70178adcab922a2382d70020b68
+      size: 2633945
   evaluate_0525:
     cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
       --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
@@ -176,8 +176,8 @@ stages:
       md5: e58f905251b9cb1ac970122f8835c872
       size: 85667432
     - path: output/0525_clusters.json
-      md5: 4a687d30b772f258a7458ec83845b7c3
-      size: 2412162
+      md5: aba3c70178adcab922a2382d70020b68
+      size: 2633945
     - path: purano/clusterer/metrics.py
       md5: c909a0299ca13fbc6e7a538243238257
       size: 1566
@@ -216,12 +216,12 @@ stages:
       md5: 019c70060b78bec96b7175d286822c2f
       size: 56985459
     - path: output/0525_parsed.db
-      md5: 46c1889990cc25e28c2b7831db52cb6b
-      size: 140140544
+      md5: 6d864f7a1a6f648a6ae783d265caf184
+      size: 129195008
     - path: purano/run_annotate.py
       md5: bf810130972e360bb118491b4515dba7
       size: 2433
     outs:
     - path: output/0525_annotated_light.db
-      md5: 349e7508e7324eb18c32286ee37c84c0
-      size: 316346368
+      md5: 0db30aab1e86e3c3fd4eb7be2424ee1a
+      size: 303014912
