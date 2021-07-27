@@ -41,8 +41,9 @@ class TransformersProcessor(Processor):
         input_fields: List[str],
         output_field: str,
         max_tokens_count: int,
-        layer: int,
-        aggregation: str = "mean||max"
+        layer: int = -1,
+        aggregation: str = "mean||max",
+        normalize: bool = False
     ):
         samples = []
         for doc_num, doc in enumerate(docs):
@@ -68,13 +69,20 @@ class TransformersProcessor(Processor):
                 return_dict=True,
                 output_hidden_states=True
             )
-        layer_embeddings = output.hidden_states[layer]
-        embeddings = layer_embeddings.cpu().numpy()
-        if aggregation == "mean||max":
-            embeddings = np.concatenate((embeddings.mean(axis=1), embeddings.max(axis=1)), axis=1)
-        elif aggregation == "first":
-            embeddings = embeddings[:, 0, :]
+
+        if aggregation == "pooler":
+            embeddings = output.pooler_output
         else:
-            assert False
+            layer_embeddings = output.hidden_states[layer]
+            embeddings = layer_embeddings.cpu().numpy()
+            if aggregation == "mean||max":
+                embeddings = np.concatenate((embeddings.mean(axis=1), embeddings.max(axis=1)), axis=1)
+            elif aggregation == "first":
+                embeddings = embeddings[:, 0, :]
+            else:
+                assert False
+        if normalize:
+            embeddings = torch.nn.functional.normalize(embeddings)
+
         for doc_num, info in enumerate(infos):
             getattr(info, output_field).extend(embeddings[doc_num])

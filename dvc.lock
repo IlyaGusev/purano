@@ -77,8 +77,8 @@ stages:
       md5: 690be67dd8c7ae4747556c6ee6e9397d
       size: 1298
     - path: purano/run_parse.py
-      md5: 621eff381f48cf58313ea02aaa19b507
-      size: 6525
+      md5: 2e6308a5e37a7a5a67df36819e93cb6b
+      size: 6531
     params:
       configs/cleaner.jsonnet:
         cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
@@ -95,8 +95,8 @@ stages:
       --sort-by-date --output-file output/0525_annotated.db --input-file output/0525_parsed.db
     deps:
     - path: configs/annotator.jsonnet
-      md5: a8408f57af1167214110ad9bd6a41b37
-      size: 3507
+      md5: 447686cda73cd2d3ba38576b6195314e
+      size: 3957
     - path: models/fasttext
       md5: cd7ec4a620037c4af9776bd5305367a9.dir
       size: 369376324
@@ -125,18 +125,18 @@ stages:
       size: 2433
     outs:
     - path: output/0525_annotated.db
-      md5: ccbe54ea92b68fdcb5a74e05e1a25206
-      size: 443144192
+      md5: 5086329dca317bc4b043d18e182614a6
+      size: 567951360
   clustering_0525:
     cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
       --output-file output/0525_clusters.json --input-file output/0525_annotated.db
     deps:
     - path: output/0525_annotated.db
-      md5: ccbe54ea92b68fdcb5a74e05e1a25206
-      size: 443144192
+      md5: 5086329dca317bc4b043d18e182614a6
+      size: 567951360
     - path: purano/clusterer/clusterer.py
-      md5: a00a13aa8f33124404ea3728f4eadf48
-      size: 11522
+      md5: d72e3c3d84a97553063f1564223eb570
+      size: 11521
     - path: purano/run_clustering.py
       md5: 6e8fceab319934e72c0e1a70d05889ba
       size: 1706
@@ -146,7 +146,7 @@ stages:
           type: agglomerative
           affinity: precomputed
           linkage: average
-          distance_threshold: 0.37
+          distance_threshold: 0.36
           n_clusters:
           window_size: 21000
           intersection_size: 5000
@@ -156,14 +156,14 @@ stages:
         distances.time_penalty: 4.0
         fetching.embeddings.aggregation: concat
         fetching.embeddings.keys:
-        - gen_title_embedding
+        - labse_embedding
         fetching.embeddings.weights:
         - 1.0
         fetching.entities_key: title_slovnet_ner
     outs:
     - path: output/0525_clusters.json
-      md5: aba3c70178adcab922a2382d70020b68
-      size: 2633945
+      md5: 463fa71fea9a5eb49d539b02262a9633
+      size: 2556426
   evaluate_0525:
     cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
       --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
@@ -176,8 +176,8 @@ stages:
       md5: e58f905251b9cb1ac970122f8835c872
       size: 85667432
     - path: output/0525_clusters.json
-      md5: aba3c70178adcab922a2382d70020b68
-      size: 2633945
+      md5: 463fa71fea9a5eb49d539b02262a9633
+      size: 2556426
     - path: purano/clusterer/metrics.py
       md5: c909a0299ca13fbc6e7a538243238257
       size: 1566
@@ -186,7 +186,7 @@ stages:
       size: 1746
     outs:
     - path: output/0525_metrics.json
-      md5: 5f03beaf8fdaad076e297475bf445c8a
+      md5: 0878592f10b3724cc2642617f59d4e19
       size: 834
   annotate_light_0525:
     cmd: python3 -m purano.run_annotate --config configs/annotator_light.jsonnet --reannotate

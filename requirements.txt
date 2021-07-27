@@ -13,7 +13,7 @@ torch >= 1.5.0
 pytorch_lightning >= 1.0.5
 tensorboard >= 2.4
 tensorboardX >= 2.1
-transformers == 3.4.0
+transformers >= 4.6.0
 
 # Infrasturcture: packages for configuration and database management.
 python-dateutil >= 2.8.1

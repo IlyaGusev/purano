@@ -3,7 +3,7 @@
         "type": "agglomerative",
         "affinity": "precomputed",
         "linkage": "average",
-        "distance_threshold": 0.37,
+        "distance_threshold": 0.36,
         "n_clusters": null,
         "window_size": 21000,
         "intersection_size": 5000
@@ -11,7 +11,7 @@
     "fetching": {
         "embeddings": {
             "aggregation": "concat",
-            "keys": ["gen_title_embedding"],
+            "keys": ["labse_embedding"],
             "weights": [1.0]
         },
         "keywords_key": "tfidf_keywords",

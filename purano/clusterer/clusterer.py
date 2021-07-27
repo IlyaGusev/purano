@@ -155,7 +155,6 @@ class Clusterer:
                     distances[b1, b2] = min(max_distance, distances[b1, b2] * time_penalty)
         return distances
 
-
     @staticmethod
     def compact_mapping(old_labels_to_new):
         # Compact labels by transitivity

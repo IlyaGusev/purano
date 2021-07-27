@@ -7,7 +7,8 @@
         "ner_slovnet_title",
         "gen_title_encoder",
         "tfidf_keywords",
-        "tfidf"
+        "tfidf",
+        "labse"
     ],
     "processors": {
         "fasttext": {
@@ -42,6 +43,12 @@
         "gen_title_encoder": {
             "type": "transformers",
             "pretrained_model_name_or_path": "IlyaGusev/gen_title_tg_bottleneck_encoder",
+            "use_gpu": true,
+            "do_lower_case": false
+        },
+        "labse": {
+            "type": "transformers",
+            "pretrained_model_name_or_path": "cointegrated/LaBSE-en-ru",
             "use_gpu": true,
             "do_lower_case": false
         }
@@ -100,5 +107,13 @@
         "max_tokens_count": 196,
         "layer": -1,
         "aggregation": "first"
+    },
+    "labse": {
+        "processor": "labse",
+        "input_fields": ["title", "text"],
+        "output_field": "labse_embedding",
+        "max_tokens_count": 100,
+        "aggregation": "pooler",
+        "normalize": true
     }
 }
