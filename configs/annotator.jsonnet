@@ -48,7 +48,7 @@
         },
         "labse": {
             "type": "transformers",
-            "pretrained_model_name_or_path": "cointegrated/LaBSE-en-ru",
+            "pretrained_model_name_or_path": "sentence-transformers/LaBSE",
             "use_gpu": true,
             "do_lower_case": false
         }

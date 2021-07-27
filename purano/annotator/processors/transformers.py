@@ -76,7 +76,9 @@ class TransformersProcessor(Processor):
             layer_embeddings = output.hidden_states[layer]
             embeddings = layer_embeddings.cpu().numpy()
             if aggregation == "mean||max":
-                embeddings = np.concatenate((embeddings.mean(axis=1), embeddings.max(axis=1)), axis=1)
+                mean_embedding = embeddings.mean(axis=1)
+                max_embedding = embeddings.max(axis=1)
+                embeddings = np.concatenate((mean_embedding, max_embedding), axis=1)
             elif aggregation == "first":
                 embeddings = embeddings[:, 0, :]
             else:

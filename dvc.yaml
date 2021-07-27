@@ -11,7 +11,7 @@ stages:
       - cat_detect_model_path
       - is_lower
       - is_news_only
-      - is_russian_only
+      - languages
       - lang_detect_model_path
     outs:
     - output/0525_parsed.db

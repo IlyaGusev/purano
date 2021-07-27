@@ -24,7 +24,7 @@ class DocumentsCleaner:
         self.cat_detect_model_path = self.config["cat_detect_model_path"]
         self.max_tokens = self.config.get("max_tokens")
         self.is_lower = self.config["is_lower"]
-        self.is_russian_only = self.config.get("is_russian_only", False)
+        self.languages = self.config.get("languages", ["ru", "en"])
         self.is_news_only = self.config.get("is_news_only", False)
         assert os.path.exists(self.lang_detect_model_path), "No language detection model found"
         assert os.path.exists(self.cat_detect_model_path), "No category detection model found"
@@ -52,7 +52,7 @@ class DocumentsCleaner:
         (lang_label,), (lang_prob,) = self.lang_detect_model.predict(lang_text_sample, k=1)
         lang_label = lang_label[FASTTEXT_LABEL_OFFSET:]
         document["language"] = lang_label
-        if self.is_russian_only and lang_label != "ru" or lang_prob < 0.6:
+        if lang_label not in self.languages and (lang_label != "ru" or lang_prob < 0.6):
             return None
 
         document["patched_title"] = self.preprocess(title)

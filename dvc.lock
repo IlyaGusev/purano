@@ -77,26 +77,28 @@ stages:
       md5: 690be67dd8c7ae4747556c6ee6e9397d
       size: 1298
     - path: purano/run_parse.py
-      md5: 2e6308a5e37a7a5a67df36819e93cb6b
-      size: 6531
+      md5: 3517bc38c96a0bd58a243f94a6790e75
+      size: 6540
     params:
       configs/cleaner.jsonnet:
         cat_detect_model_path: models/cat_detect/ru_cat_v5.ftz
         is_lower: true
         is_news_only: false
-        is_russian_only: false
         lang_detect_model_path: models/lang_detect/lang_detect_v10.ftz
+        languages:
+        - ru
+        - en
     outs:
     - path: output/0525_parsed.db
-      md5: 6d864f7a1a6f648a6ae783d265caf184
-      size: 129195008
+      md5: 6f5eaae740dd82f9c17a505f0fa0a305
+      size: 129027072
   annotate_0525:
     cmd: python3 -m purano.run_annotate --config configs/annotator.jsonnet --reannotate
       --sort-by-date --output-file output/0525_annotated.db --input-file output/0525_parsed.db
     deps:
     - path: configs/annotator.jsonnet
-      md5: 447686cda73cd2d3ba38576b6195314e
-      size: 3957
+      md5: d8f7bc509e14e89b998be842a7fb27d9
+      size: 3960
     - path: models/fasttext
       md5: cd7ec4a620037c4af9776bd5305367a9.dir
       size: 369376324
@@ -118,22 +120,22 @@ stages:
       md5: 019c70060b78bec96b7175d286822c2f
       size: 56985459
     - path: output/0525_parsed.db
-      md5: 6d864f7a1a6f648a6ae783d265caf184
-      size: 129195008
+      md5: 6f5eaae740dd82f9c17a505f0fa0a305
+      size: 129027072
     - path: purano/run_annotate.py
       md5: bf810130972e360bb118491b4515dba7
       size: 2433
     outs:
     - path: output/0525_annotated.db
-      md5: 5086329dca317bc4b043d18e182614a6
-      size: 567951360
+      md5: 19bd3dfbd5f580e2941d52317a773940
+      size: 567412736
   clustering_0525:
     cmd: python3 -m purano.run_clustering --config configs/clusterer.jsonnet --sort-by-date
       --output-file output/0525_clusters.json --input-file output/0525_annotated.db
     deps:
     - path: output/0525_annotated.db
-      md5: 5086329dca317bc4b043d18e182614a6
-      size: 567951360
+      md5: 19bd3dfbd5f580e2941d52317a773940
+      size: 567412736
     - path: purano/clusterer/clusterer.py
       md5: d72e3c3d84a97553063f1564223eb570
       size: 11521
@@ -162,8 +164,8 @@ stages:
         fetching.entities_key: title_slovnet_ner
     outs:
     - path: output/0525_clusters.json
-      md5: 463fa71fea9a5eb49d539b02262a9633
-      size: 2556426
+      md5: 0fce4ab43f3a0b0f003d3cab443f2510
+      size: 2548298
   evaluate_0525:
     cmd: python3 -m purano.run_evaluate --clustering-markup-tsv data/markup/ru_clustering_0525.tsv
       --original-json data/documents/ru_tg_0525.jsonl --threads-json output/0525_clusters.json
@@ -176,8 +178,8 @@ stages:
       md5: e58f905251b9cb1ac970122f8835c872
       size: 85667432
     - path: output/0525_clusters.json
-      md5: 463fa71fea9a5eb49d539b02262a9633
-      size: 2556426
+      md5: 0fce4ab43f3a0b0f003d3cab443f2510
+      size: 2548298
     - path: purano/clusterer/metrics.py
       md5: c909a0299ca13fbc6e7a538243238257
       size: 1566
@@ -186,8 +188,8 @@ stages:
       size: 1746
     outs:
     - path: output/0525_metrics.json
-      md5: 0878592f10b3724cc2642617f59d4e19
-      size: 834
+      md5: 571140ca05f5fe88e2cf8afb0627a2ae
+      size: 831
   annotate_light_0525:
     cmd: python3 -m purano.run_annotate --config configs/annotator_light.jsonnet --reannotate
       --sort-by-date --output-file output/0525_annotated_light.db --input-file output/0525_parsed.db
@@ -216,12 +218,12 @@ stages:
       md5: 019c70060b78bec96b7175d286822c2f
       size: 56985459
     - path: output/0525_parsed.db
-      md5: 6d864f7a1a6f648a6ae783d265caf184
-      size: 129195008
+      md5: 6f5eaae740dd82f9c17a505f0fa0a305
+      size: 129027072
     - path: purano/run_annotate.py
       md5: bf810130972e360bb118491b4515dba7
       size: 2433
     outs:
     - path: output/0525_annotated_light.db
-      md5: 0db30aab1e86e3c3fd4eb7be2424ee1a
-      size: 303014912
+      md5: 6726aced0341e2b9227b84ad6668399e
+      size: 302698496
